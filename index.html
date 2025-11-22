@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PacketLab · V1 (Multi-Lang)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PacketLab · V21 Gem (Universal)</title>
+  <!-- Viewport optimized for mobile (no zoom) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,7 +15,7 @@
   <!-- RectAreaLight for Mirror Mode -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lights/RectAreaLightUniformsLib.js"></script>
   
-  <!-- Post-Processing (Bloom/Glow) -->
+  <!-- Post-Processing -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
@@ -23,11 +24,11 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Roboto:wght@300;400;700&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Roboto:wght@300;400;700&display=swap");
+    @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap'); 
 
     /* --- THEME VARIABLES --- */
     :root {
-        /* --- DEFAULT (CYBERPUNK) --- */
         --bg-color: #050508;
         --text-main: #ffffff;
         --text-muted: #94a3b8;
@@ -40,26 +41,27 @@
         --font-ui: "Orbitron", sans-serif;
         --font-data: "Share Tech Mono", monospace;
         --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.2);
+        --ui-scale: 1; 
+        --header-height: 90px;
     }
 
     body.theme-mirror {
-        /* --- MIRROR EDGE --- */
         --bg-color: #f0f2f5;
         --text-main: #1a1a1a;
         --text-muted: #64748b;
         --panel-bg: rgba(255, 255, 255, 0.9);
         --panel-border: #e2e8f0;
-        --accent-primary: #d9002b;
-        --accent-secondary: #f59e0b;
+        --accent-primary: #d9002b; 
+        --accent-secondary: #f59e0b; 
         --btn-bg-start: rgba(217, 0, 43, 0.1);
         --btn-bg-end: rgba(217, 0, 43, 0.2);
         --font-ui: "Rajdhani", sans-serif;
         --font-data: "Roboto", sans-serif;
         --shadow-glow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        --ui-scale: 1.15; 
     }
 
     body.theme-matrix {
-        /* --- MATRIX --- */
         --bg-color: #000000;
         --text-main: #00ff41;
         --text-muted: #008f11;
@@ -72,7 +74,11 @@
         --font-ui: "Courier New", monospace;
         --font-data: "Courier New", monospace;
         --shadow-glow: 0 0 15px rgba(0, 255, 65, 0.4);
+        --ui-scale: 1.05;
     }
+
+    body.lang-zh { font-family: "Noto Sans SC", sans-serif !important; --ui-scale: 1; }
+    body.lang-zh .btn-action, body.lang-zh h1, body.lang-zh h2 { font-family: "Noto Sans SC", sans-serif !important; }
 
     body {
         margin: 0; overflow: hidden;
@@ -80,153 +86,194 @@
         font-family: var(--font-ui);
         color: var(--text-main);
         transition: background-color 0.5s, color 0.5s;
+        font-size: calc(14px * var(--ui-scale)); /* Slightly smaller base for mobile compatibility */
     }
 
-    #canvas-container { position: absolute; inset: 0; z-index: 2; }
-    #matrix-bg { position: absolute; inset: 0; z-index: 1; opacity: 0; pointer-events: none; background: black; transition: opacity 0.5s; }
-
-    /* --- UI LAYOUT --- */
-    #ui-layer {
-        position: absolute; inset: 0; pointer-events: none;
-        display: flex; flex-direction: column; justify-content: space-between;
-        padding: 16px; z-index: 20;
+    /* --- LAYERS --- */
+    #matrix-bg { position: absolute; inset: 0; z-index: 1; opacity: 0; pointer-events: none; background: transparent; transition: opacity 0.5s; }
+    #canvas-container { position: absolute; inset: 0; z-index: 2; pointer-events: auto; }
+    
+    /* UI Layer Layout */
+    #ui-layer { 
+        position: absolute; inset: 0; pointer-events: none; 
+        display: flex; flex-direction: column; justify-content: space-between; 
+        padding: 16px; z-index: 20; 
+        overflow: hidden;
     }
 
+    /* --- PANELS --- */
     .panel {
         background: var(--panel-bg);
         border: 1px solid var(--panel-border);
-        padding: 20px; pointer-events: auto;
+        border-left: 4px solid var(--accent-primary);
+        padding: 15px; /* Slightly reduced padding for mobile */
+        pointer-events: auto;
         backdrop-filter: blur(12px);
         box-shadow: var(--shadow-glow);
         transition: all 0.3s ease;
-        border-radius: 4px;
+        border-radius: 4px; 
+        box-sizing: border-box; 
     }
     
-    body.theme-mirror .panel {
-        border-left: 4px solid var(--accent-primary);
-        border-radius: 0px;
+    body.theme-mirror .panel { border-radius: 0px; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent-primary); }
+
+    /* --- HEADER --- */
+    .header-container {
+        /* Flexible height on mobile, fixed on desktop via media query */
+        display: flex;
+        flex-direction: column; /* Stack on mobile */
+        align-items: flex-start;
+        gap: 10px;
+        pointer-events: auto; /* Enable interaction */
     }
 
-    h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; color: var(--accent-primary); margin: 0; line-height: 1;}
-    h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent-secondary); margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+    h1 { 
+        font-size: clamp(18px, 4vw, 24px) !important; /* Responsive Font Size */
+        font-weight: 900; letter-spacing: 1px; color: var(--accent-primary); 
+        margin: 0; line-height: 1.1; 
+    }
+    #app-subtitle { font-size: 10px !important; line-height: 1.4; margin-top: 2px; display: none; /* Hide subtitle on very small screens */ }
+    @media (min-width: 360px) { #app-subtitle { display: block; } }
 
-    /* Buttons */
+    /* --- CONTROLS --- */
+    .controls-container {
+        /* Controls panel at bottom */
+        width: 100%;
+        max-height: 50vh; /* Don't take more than half screen on mobile */
+        overflow-y: auto; /* Scroll if needed */
+        margin-top: auto; /* Push to bottom */
+        display: flex; flex-direction: column;
+    }
+
+    /* --- BUTTONS --- */
     .btn-action {
         background: linear-gradient(90deg, var(--btn-bg-start), var(--btn-bg-end));
         border: 2px solid var(--accent-primary);
         color: var(--text-main);
-        padding: 14px; width: 100%;
+        padding: 0 14px; width: 100%; height: 48px; 
+        display: flex; align-items: center; justify-content: center;
         font-family: var(--font-ui); font-weight: 800; font-size: 1rem;
         text-transform: uppercase; letter-spacing: 1px;
         cursor: pointer; transition: all 0.2s;
-        margin-top: 12px; position: relative; overflow: hidden;
+        margin-top: 10px; position: relative; overflow: hidden; box-sizing: border-box;
     }
-    
-    body.theme-mirror .btn-action {
-        background: var(--accent-primary);
-        color: white;
-        border: none;
-        border-radius: 0;
-        box-shadow: 0 4px 6px rgba(255, 0, 51, 0.2);
-    }
-    body.theme-mirror .btn-action:hover {
-        background: #b30024;
-        transform: translateY(-1px);
-    }
-    
-    .btn-action:hover {
-        background: var(--accent-primary);
-        color: var(--bg-color);
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 20px var(--accent-primary);
-    }
+    body.theme-mirror .btn-action { background: var(--accent-primary); color: white; border: 2px solid transparent; border-radius: 0; box-shadow: 0 4px 6px rgba(255, 0, 51, 0.2); }
+    body.theme-mirror .btn-action:hover { background: #b30024; transform: translateY(-1px); }
+    .btn-action:hover { background: var(--accent-primary); color: var(--bg-color); border-color: var(--accent-primary); box-shadow: 0 0 20px var(--accent-primary); }
     .btn-action:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
 
     .btn-nav {
         background: rgba(0,0,0,0.05); border: 1px solid var(--panel-border);
-        color: var(--text-main); padding: 8px 12px; font-size: 0.8rem;
-        font-weight: 700; cursor: pointer; text-transform: uppercase; flex: 1;
-        transition: all 0.2s;
+        color: var(--text-main); font-size: 0.75rem; font-weight: 700; 
+        cursor: pointer; text-transform: uppercase; flex: 1; transition: all 0.2s;
+        box-sizing: border-box; height: 40px; /* Taller for touch */
+        display: flex; align-items: center; justify-content: center;
     }
     .btn-nav:hover { background: var(--accent-primary); color: var(--bg-color); border-color: var(--accent-primary); }
 
+    .theme-controls { display: flex; height: 28px; align-items: center; gap: 2px; flex-wrap: wrap; }
     .btn-theme {
-        font-size: 0.7rem; padding: 6px 12px; border: 1px solid var(--panel-border);
+        font-size: 10px; width: 55px; height: 26px; border: 1px solid var(--panel-border);
         background: transparent; color: var(--text-muted); cursor: pointer;
-        opacity: 0.8; transition: all 0.2s; margin-right: 4px;
+        opacity: 0.8; transition: all 0.2s; box-sizing: border-box;
+        display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;
     }
-    .btn-theme:hover, .btn-theme.active { opacity: 1; color: var(--bg-color); background: var(--accent-primary); border-color: var(--accent-primary); font-weight: bold; }
+    .btn-theme.active { opacity: 1; color: var(--bg-color); background: var(--accent-primary); border-color: var(--accent-primary); font-weight: bold; }
     
-    /* Lang Buttons */
     .btn-lang {
-        font-size: 0.7rem; padding: 4px 8px; border: 1px solid var(--panel-border);
+        font-size: 10px; width: 24px; height: 24px; border: 1px solid var(--panel-border);
         background: transparent; color: var(--text-muted); cursor: pointer;
-        opacity: 0.6; transition: all 0.2s;
+        opacity: 0.6; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-lang.active { opacity: 1; background: var(--accent-primary); color: var(--bg-color); font-weight: bold; }
 
-    /* List */
     #layer-list { list-style: none; padding: 0; margin: 0; }
     .layer-item {
-        padding: 12px 10px;
-        border-bottom: 1px solid var(--panel-border);
-        font-size: 0.9rem; display: flex; justify-content: space-between;
-        opacity: 0.5; transition: all 0.3s; font-family: var(--font-data);
-        font-weight: 600;
+        padding: 0 10px; border-bottom: 1px solid var(--panel-border);
+        font-size: 0.85rem; display: flex; justify-content: space-between;
+        opacity: 0.5; transition: all 0.3s; font-family: var(--font-data); font-weight: 600;
+        height: 38px; box-sizing: border-box; align-items: center;
     }
-    .layer-item:hover { opacity: 1; background: rgba(128,128,128,0.05); }
-    .layer-item.active {
-        opacity: 1;
-        background: linear-gradient(90deg, rgba(128,128,128,0.1), transparent);
-        font-weight: bold;
-        border-left: 4px solid currentColor;
-        padding-left: 16px;
-    }
+    .layer-item.active { opacity: 1; background: linear-gradient(90deg, rgba(128,128,128,0.1), transparent); font-weight: bold; border-left: 4px solid currentColor; padding-left: 16px; }
     .layer-item.completed { opacity: 1; }
 
-    /* Info */
     .info-block {
         background: rgba(128,128,128,0.08); border: 1px solid var(--panel-border);
-        padding: 10px; margin-bottom: 10px; font-size: 0.85rem;
+        padding: 8px; margin-bottom: 8px; font-size: 0.8rem;
         color: var(--text-muted); font-family: var(--font-data);
         border-left: 3px solid var(--accent-secondary);
     }
-    .info-label {
-        font-size: 0.7rem; color: var(--accent-primary); font-weight: bold;
-        text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;
-    }
+    .info-label { font-size: 0.7rem; color: var(--accent-primary); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
 
     #message-overlay {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        font-size: 3rem; font-weight: 900; color: var(--accent-primary);
+        position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+        font-size: clamp(2rem, 8vw, 4rem); /* Responsive font size */
+        font-weight: 900; color: var(--accent-primary); text-align: center;
         text-shadow: 0 0 30px var(--accent-primary);
         pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 50;
-        background: rgba(0,0,0,0.9); padding: 40px; border: 3px solid var(--accent-primary);
+        background: rgba(0,0,0,0.9); padding: 20px 40px; border: 3px solid var(--accent-primary);
+        width: 90%; max-width: 600px; box-sizing: border-box;
     }
+    body.theme-mirror #message-overlay { background: transparent; border: none; font-family: 'Rajdhani', sans-serif; color: #ff0033; text-shadow: 3px 3px 0px #fff; }
     
-    body.theme-mirror #message-overlay {
-        background: transparent;
-        border: none;
-        font-family: 'Rajdhani', sans-serif;
-        color: #ff0033;
-        font-size: 5rem;
-        text-shadow: 3px 3px 0px #fff, -1px -1px 0 #fff, 1px -1px 0 #fff;
-    }
-    
-    #compare-overlay {
-        position: absolute; inset: 0; background: rgba(0,0,0,0.95);
-        display: none; align-items: center; justify-content: center; z-index: 100; pointer-events: auto;
-    }
-    #compare-box {
-        max-width: 800px; width: 95%; background: var(--bg-color);
-        border: 1px solid var(--accent-primary); padding: 25px;
-        box-shadow: 0 0 50px rgba(0,0,0,0.2);
-    }
-    table { width: 100%; border-collapse: collapse; color: var(--text-muted); font-size: 0.9rem; }
-    th, td { border: 1px solid var(--panel-border); padding: 10px; text-align: left; }
+    #compare-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; padding: 20px; }
+    #compare-box { max-width: 800px; width: 100%; background: var(--bg-color); border: 1px solid var(--accent-primary); padding: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.2); overflow-y: auto; max-height: 90vh; }
+    table { width: 100%; border-collapse: collapse; color: var(--text-muted); font-size: 0.8rem; }
+    th, td { border: 1px solid var(--panel-border); padding: 8px; text-align: left; }
     th { color: var(--accent-primary); background: rgba(128,128,128,0.05); }
 
-    @media (max-width: 768px) { .panel { max-width: 100%; padding: 15px; } h1 { font-size: 1.2rem; } }
+    /* --- RESPONSIVE MEDIA QUERIES --- */
+    
+    /* DESKTOP (lg) > 1024px */
+    @media (min-width: 1024px) {
+        #ui-layer { padding: 20px; }
+        .header-container { flex-direction: row; height: 90px; align-items: center; width: auto; }
+        .controls-container { width: 380px; margin-bottom: 20px; margin-right: 20px; align-self: flex-end; border-radius: 4px; }
+        #left-stack { display: block; } /* Show stack on desktop */
+        .btn-nav { height: 36px; }
+    }
+
+    /* TABLET (md) 768px - 1024px */
+    @media (min-width: 768px) and (max-width: 1023px) {
+        .header-container { flex-direction: row; width: 100%; justify-content: space-between; }
+        .controls-container { width: 350px; align-self: flex-end; }
+        #left-stack { display: block; width: 200px; }
+    }
+
+    /* MOBILE (sm) < 768px */
+    @media (max-width: 767px) {
+        #ui-layer { padding: 10px; }
+        
+        /* Header compacted */
+        .header-container { 
+            width: 100%; 
+            height: auto; 
+            min-height: auto; 
+            padding: 10px; 
+            gap: 8px;
+            border-radius: 0 0 10px 10px; /* Rounded bottom */
+        }
+        
+        /* Hide Left Stack on Mobile to clear view */
+        #left-stack { display: none !important; }
+        
+        /* Controls at bottom, full width */
+        .controls-container {
+            width: 100%;
+            align-self: center;
+            border-radius: 12px 12px 0 0;
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 30px; /* Safe area for iOS home bar */
+        }
+        
+        .btn-theme { width: 45px; font-size: 9px; }
+        
+        /* Adjust Font sizes */
+        h2 { font-size: 1rem; margin-bottom: 5px; }
+        .stat-val { font-size: 1.1rem; }
+        p { font-size: 0.8rem; }
+    }
   </style>
 </head>
 
@@ -241,107 +288,58 @@
     <div id="compare-box">
       <div class="flex justify-between items-center mb-4">
         <h2 id="compare-title">COMPARISON OSI vs TCP/IP</h2>
-        <button id="compare-close" class="btn-nav" style="flex:0; padding: 5px 10px;">X</button>
+        <button id="compare-close" class="btn-nav" style="flex:0; padding: 5px 15px;">X</button>
       </div>
-      <table>
-        <thead><tr><th>OSI</th><th id="compare-role">Role</th><th>TCP/IP</th></tr></thead>
-        <tbody>
-          <tr><td>7. Application</td><td>Web/Mail</td><td rowspan="3">Application</td></tr>
-          <tr><td>6. Presentation</td><td>Format</td></tr>
-          <tr><td>5. Session</td><td>Dialogue</td></tr>
-          <tr><td>4. Transport</td><td id="compare-transport">Reliability</td><td>Transport</td></tr>
-          <tr><td>3. Network</td><td id="compare-internet">Routing IP</td><td>Internet</td></tr>
-          <tr><td>2. Data Link</td><td>MAC / Switch</td><td rowspan="2" id="compare-net-access">Network Access</td></tr>
-          <tr><td>1. Physical</td><td>Cables</td></tr>
-        </tbody>
-      </table>
+      <div style="overflow-x:auto;">
+        <table>
+            <thead><tr><th>OSI</th><th id="compare-role">Role</th><th>TCP/IP</th></tr></thead>
+            <tbody>
+            <tr><td>7. Application</td><td>Web/Mail</td><td rowspan="3">Application</td></tr>
+            <tr><td>6. Presentation</td><td>Format</td></tr>
+            <tr><td>5. Session</td><td>Dialogue</td></tr>
+            <tr><td>4. Transport</td><td id="compare-transport">Reliability</td><td>Transport</td></tr>
+            <tr><td>3. Network</td><td id="compare-internet">Routing IP</td><td>Internet</td></tr>
+            <tr><td>2. Data Link</td><td>MAC / Switch</td><td rowspan="2" id="compare-net-access">Network Access</td></tr>
+            <tr><td>1. Physical</td><td>Cables</td></tr>
+            </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <div id="ui-layer">
     <!-- Top Bar -->
-    <div class="panel self-start flex flex-col md:flex-row gap-6 items-center shadow-lg">
+    <div class="panel header-container shadow-lg">
       <div>
-          <h1 class="text-2xl" id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V1</span></h1>
-          <div id="app-subtitle" class="text-[0.7rem] tracking-widest mt-1" style="color: var(--text-muted);">NETWORK FLOW VISUALIZER</div>
+          <h1 class="text-2xl" id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V21 GEM</span></h1>
+          <div id="app-subtitle" class="tracking-widest" style="color: var(--text-muted);">NETWORK FLOW VISUALIZER</div>
       </div>
       
-      <div class="flex flex-col gap-2">
-          <div class="flex justify-between items-center">
-             <div class="flex gap-1">
+      <div class="flex flex-col gap-1 md:gap-2 md:ml-auto mt-2 md:mt-0">
+          <div class="flex justify-between items-center w-full">
+             <div class="theme-controls">
                   <button class="btn-theme active" data-theme="cyberpunk">CYBER</button>
                   <button class="btn-theme" data-theme="mirror">MIRROR</button>
                   <button class="btn-theme" data-theme="matrix">MATRIX</button>
              </div>
              <!-- Language Selector -->
-             <div class="flex gap-1 ml-4 border-l border-gray-700 pl-4">
+             <div class="flex items-center ml-2 pl-2 border-l border-gray-600">
                  <button class="btn-lang active" id="lang-en" onclick="setLanguage('en')">EN</button>
                  <button class="btn-lang" id="lang-fr" onclick="setLanguage('fr')">FR</button>
+                 <button class="btn-lang" id="lang-es" onclick="setLanguage('es')">ES</button>
+                 <button class="btn-lang" id="lang-zh" onclick="setLanguage('zh')">ZH</button>
              </div>
           </div>
           
-          <div>
+          <div style="display: flex; align-items: center; margin-top: 2px;">
               <span id="lbl-mode" class="text-[0.65rem] uppercase font-bold mr-2 opacity-70">MODE:</span>
               <button id="mode-toggle" class="text-xs font-bold uppercase hover:underline" style="color: var(--accent-secondary);">ENCAPSULATION</button>
           </div>
       </div>
     </div>
 
-    <!-- Right Controls -->
-    <div class="panel self-end mt-auto md:w-96 w-full shadow-2xl">
-        <div class="border-b border-gray-700 pb-3 mb-4 flex justify-between items-end" style="border-color: var(--panel-border);">
-            <h2 id="current-layer-title" style="margin:0;">LAYER 7: APPLICATION</h2>
-            <span id="step-counter" class="text-sm font-mono opacity-70">1 / 7</span>
-        </div>
-
-        <div class="flex justify-between mb-5">
-            <div>
-                <span id="lbl-pdu" class="info-label">PDU (UNIT)</span>
-                <div id="pdu-display" class="text-xl font-bold" style="color: var(--text-main);">Data</div>
-            </div>
-            <div class="text-right">
-                <span id="lbl-header" class="info-label">ADDED HEADER</span>
-                <div id="header-display" class="text-md font-mono" style="color: var(--accent-primary);">Raw Data</div>
-            </div>
-        </div>
-
-        <div class="mb-4">
-            <span id="lbl-function" class="info-label">FUNCTION</span>
-            <p id="desc-display" class="text-sm leading-snug" style="color: var(--text-muted);">User interface generation.</p>
-        </div>
-
-        <div class="info-block">
-            <span id="lbl-details" class="info-label">TECHNICAL DETAILS</span>
-            <div id="header-details">HTTP, SMTP...</div>
-        </div>
-        
-        <div class="info-block">
-            <span id="lbl-example" class="info-label">REAL WORLD EXAMPLE</span>
-            <div id="examples-details">Opening a web page.</div>
-        </div>
-
-        <button id="action-btn" class="btn-action">ENCAPSULATE (LAYER 6)</button>
-
-        <div class="flex gap-3 mt-4">
-            <button id="prev-step-btn" class="btn-nav">◀ BACK</button>
-            <button id="next-step-btn" class="btn-nav">NEXT ▶</button>
-        </div>
-
-        <div class="flex gap-2 mt-3 flex-wrap">
-            <button id="autoplay-btn" class="btn-nav" style="border-color: var(--accent-primary);">▶ AUTO</button>
-            <button id="speed-btn" class="btn-nav" style="flex:0 0 60px;">1x</button>
-            <button id="avalanche-btn" class="btn-nav text-xs" style="flex:0 0 120px;">AVALANCHE OFF</button>
-            <button id="explode-btn" class="btn-nav text-xs">EXPLODED VIEW</button>
-            <button id="compare-btn" class="btn-nav text-xs">TCP/IP</button>
-        </div>
-        
-        <!-- Hidden Buttons -->
-        <button id="decap-btn" class="btn-action mt-2" style="display:none; background: var(--accent-secondary); border-color: var(--text-main); color: var(--text-main);">DECAPSULATION MODE</button>
-        <button id="reset-btn" class="btn-action mt-2" style="display:none; background: #0f172a; color: #fff; border: 1px solid #333;">RESET</button>
-    </div>
-
-    <!-- Left Stack -->
-    <div class="panel absolute left-4 top-36 bottom-40 w-64 overflow-y-auto hidden md:block shadow-lg">
+    <!-- Left Stack (Hidden on mobile) -->
+    <div id="left-stack" class="panel absolute left-4 top-36 bottom-40 w-64 overflow-y-auto hidden shadow-lg">
         <div class="border-b pb-2 mb-2 flex justify-between items-center" style="border-color: var(--panel-border);">
             <h3 id="lbl-stack" class="text-xs font-bold tracking-widest" style="color: var(--accent-primary);">PROTOCOL STACK</h3>
         </div>
@@ -349,6 +347,59 @@
         <div class="mt-4 w-full h-2 rounded overflow-hidden" style="background: rgba(128,128,128,0.2);">
             <div id="progress-bar" class="h-full transition-all duration-500" style="width: 0%; background: var(--accent-primary);"></div>
         </div>
+    </div>
+
+    <!-- Right Controls (Bottom sheet on mobile) -->
+    <div class="panel controls-container shadow-2xl">
+        <div class="border-b border-gray-700 pb-2 mb-3 flex justify-between items-end" style="border-color: var(--panel-border);">
+            <h2 id="current-layer-title" style="margin:0;">LAYER 7: APPLICATION</h2>
+            <span id="step-counter" class="text-sm font-mono opacity-70">1 / 7</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-3">
+            <div>
+                <span id="lbl-pdu" class="info-label">PDU</span>
+                <div id="pdu-display" class="text-lg font-bold" style="color: var(--text-main);">Data</div>
+            </div>
+            <div class="text-right">
+                <span id="lbl-header" class="info-label">HEADER</span>
+                <div id="header-display" class="text-sm font-mono" style="color: var(--accent-primary);">Raw Data</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <span id="lbl-function" class="info-label">FUNCTION</span>
+            <p id="desc-display" class="text-sm leading-snug" style="color: var(--text-muted);">User interface generation.</p>
+        </div>
+
+        <!-- Details Hidden on very small screens if needed, but keeping for now -->
+        <div class="info-block hidden md:block">
+            <span id="lbl-details" class="info-label">DETAILS</span>
+            <div id="header-details">HTTP, SMTP...</div>
+        </div>
+        
+        <div class="info-block">
+            <span id="lbl-example" class="info-label">EXAMPLE</span>
+            <div id="examples-details">Opening a web page.</div>
+        </div>
+
+        <button id="action-btn" class="btn-action">ENCAPSULATE (LAYER 6)</button>
+
+        <div class="flex gap-2 mt-3">
+            <button id="prev-step-btn" class="btn-nav">◀</button>
+            <button id="next-step-btn" class="btn-nav">▶</button>
+            <button id="autoplay-btn" class="btn-nav" style="border-color: var(--accent-primary); flex: 2;">▶ AUTO</button>
+        </div>
+
+        <div class="flex gap-1 mt-2">
+            <button id="speed-btn" class="btn-nav" style="font-size: 0.7rem;">1x</button>
+            <button id="explode-btn" class="btn-nav" style="font-size: 0.6rem; flex:2;">EXPLODED</button>
+            <button id="compare-btn" class="btn-nav" style="font-size: 0.6rem;">TCP/IP</button>
+        </div>
+        
+        <!-- Hidden Buttons -->
+        <button id="decap-btn" class="btn-action mt-2" style="display:none; background: var(--accent-secondary); border-color: var(--text-main); color: var(--text-main);">DECAPSULATION MODE</button>
+        <button id="reset-btn" class="btn-action mt-2" style="display:none; background: #0f172a; color: #fff; border: 1px solid #333;">RESET</button>
     </div>
   </div>
 
@@ -361,93 +412,179 @@
         // --- LOCALIZATION DATA ---
         const translations = {
             en: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
                 subtitle: "NETWORK FLOW VISUALIZER",
                 lblMode: "MODE:",
                 modeEncap: "ENCAPSULATION",
                 modeDecap: "DECAPSULATION",
-                lblPdu: "PDU (UNIT)",
+                lblPdu: "PDU",
                 lblHeader: "ADDED HEADER",
                 lblFunction: "FUNCTION",
-                lblDetails: "TECHNICAL DETAILS",
-                lblExample: "REAL WORLD EXAMPLE",
-                lblStack: "PROTOCOL STACK",
-                btnEncapStart: "ENCAPSULATE (LAYER 6)",
-                btnTransmit: "TRANSMIT (PHYSICAL)",
+                lblDetails: "DETAILS",
+                lblExample: "EXAMPLE",
+                lblStack: "STACK",
+                btnEncapStart: "ENCAPSULATE (L6)",
+                btnTransmit: "TRANSMIT",
                 btnAdd: "ADD",
                 btnRemove: "REMOVE",
                 btnAccess: "ACCESS DATA",
-                btnBack: "◀ BACK",
-                btnNext: "NEXT ▶",
                 btnAuto: "▶ AUTO",
                 btnStop: "⏹ STOP",
-                btnExplodeOn: "EXPLODED: ON",
-                btnExplodeOff: "EXPLODED: OFF",
+                btnExplodeOn: "EXP: ON",
+                btnExplodeOff: "EXP: OFF",
                 btnReset: "RESET",
-                btnDecapMode: "DECAPSULATION MODE",
+                btnDecapMode: "DECAP MODE",
                 msgSending: "SENDING...",
                 msgSent: "SENT!",
-                msgReceived: "DATA RECEIVED!",
-                compareTitle: "COMPARISON OSI vs TCP/IP",
+                msgReceived: "RECEIVED!",
+                compareTitle: "OSI vs TCP/IP",
                 compareRole: "Role",
                 compareTransport: "Reliability",
                 compareInternet: "Internet",
-                compareNetAccess: "Network Access"
+                compareNetAccess: "Net Access",
+                layer: "LAYER",
+                stamp: "APPROVED"
             },
             fr: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1</span>",
-                subtitle: "VISUALISATION DE FLUX RÉSEAU",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                subtitle: "VISUALISATION RÉSEAU",
                 lblMode: "MODE :",
                 modeEncap: "ENCAPSULATION",
                 modeDecap: "DÉCAPSULATION",
-                lblPdu: "PDU (UNITÉ)",
-                lblHeader: "EN-TÊTE AJOUTÉ",
+                lblPdu: "PDU",
+                lblHeader: "EN-TÊTE",
                 lblFunction: "FONCTION",
-                lblDetails: "DÉTAILS TECHNIQUES",
-                lblExample: "EXEMPLE RÉEL",
-                lblStack: "PILE PROTOCOLAIRE",
-                btnEncapStart: "ENCAPSULER (COUCHE 6)",
-                btnTransmit: "TRANSMETTRE (PHYSIQUE)",
+                lblDetails: "DÉTAILS",
+                lblExample: "EXEMPLE",
+                lblStack: "PILE",
+                btnEncapStart: "ENCAPSULER (C6)",
+                btnTransmit: "TRANSMETTRE",
                 btnAdd: "AJOUTER",
                 btnRemove: "RETIRER",
-                btnAccess: "ACCÉDER AUX DONNÉES",
-                btnBack: "◀ RETOUR",
-                btnNext: "SUIVANT ▶",
+                btnAccess: "ACCÈS",
                 btnAuto: "▶ AUTO",
                 btnStop: "⏹ STOP",
-                btnExplodeOn: "VUE ÉCLATÉE : ON",
-                btnExplodeOff: "VUE ÉCLATÉE : OFF",
-                btnReset: "RÉINITIALISER",
-                btnDecapMode: "MODE DÉCAPSULATION",
-                msgSending: "ENVOI EN COURS...",
+                btnExplodeOn: "EXP: ON",
+                btnExplodeOff: "EXP: OFF",
+                btnReset: "RAZ",
+                btnDecapMode: "MODE DÉCAP",
+                msgSending: "ENVOI...",
                 msgSent: "ENVOYÉ !",
-                msgReceived: "DONNÉES REÇUES !",
-                compareTitle: "COMPARATIF OSI vs TCP/IP",
+                msgReceived: "REÇU !",
+                compareTitle: "OSI vs TCP/IP",
                 compareRole: "Rôle",
                 compareTransport: "Fiabilité",
                 compareInternet: "Internet",
-                compareNetAccess: "Accès Réseau"
+                compareNetAccess: "Accès",
+                layer: "COUCHE",
+                stamp: "VALIDÉ"
+            },
+            es: {
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                subtitle: "VISUALIZADOR DE RED",
+                lblMode: "MODO:",
+                modeEncap: "ENCAPSULACIÓN",
+                modeDecap: "DESENCAPSULACIÓN",
+                lblPdu: "PDU",
+                lblHeader: "ENCABEZADO",
+                lblFunction: "FUNCIÓN",
+                lblDetails: "DETALLES",
+                lblExample: "EJEMPLO",
+                lblStack: "PILA",
+                btnEncapStart: "ENCAPSULAR (C6)",
+                btnTransmit: "TRANSMITIR",
+                btnAdd: "AÑADIR",
+                btnRemove: "QUITAR",
+                btnAccess: "ACCESO",
+                btnAuto: "▶ AUTO",
+                btnStop: "⏹ STOP",
+                btnExplodeOn: "EXP: ON",
+                btnExplodeOff: "EXP: OFF",
+                btnReset: "REINICIO",
+                btnDecapMode: "MODO DESENCAP",
+                msgSending: "ENVIANDO...",
+                msgSent: "¡ENVIADO!",
+                msgReceived: "¡RECIBIDO!",
+                compareTitle: "OSI vs TCP/IP",
+                compareRole: "Rol",
+                compareTransport: "Fiabilidad",
+                compareInternet: "Internet",
+                compareNetAccess: "Acceso",
+                layer: "CAPA",
+                stamp: "APROBADO"
+            },
+            zh: {
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                subtitle: "网络流量可视化",
+                lblMode: "模式:",
+                modeEncap: "封装",
+                modeDecap: "解封装",
+                lblPdu: "PDU",
+                lblHeader: "头部",
+                lblFunction: "功能",
+                lblDetails: "细节",
+                lblExample: "示例",
+                lblStack: "协议栈",
+                btnEncapStart: "封装 (L6)",
+                btnTransmit: "传输",
+                btnAdd: "添加",
+                btnRemove: "移除",
+                btnAccess: "访问",
+                btnAuto: "▶ 自动",
+                btnStop: "⏹ 停止",
+                btnExplodeOn: "爆炸: 开",
+                btnExplodeOff: "爆炸: 关",
+                btnReset: "重置",
+                btnDecapMode: "解封装模式",
+                msgSending: "发送中...",
+                msgSent: "已发送!",
+                msgReceived: "已接收!",
+                compareTitle: "OSI 与 TCP/IP",
+                compareRole: "角色",
+                compareTransport: "可靠性",
+                compareInternet: "互联网",
+                compareNetAccess: "接入",
+                layer: "层",
+                stamp: "批准"
             }
         };
 
         const osiData = {
             en: [
               { id: 7, name: "Application",  pdu: "Data",    color: "#e6002e", header: "Raw Data", desc: "User interface. Data generation.", details: ["HTTP, SMTP, DNS", "User Payload"], ex: "Sending an email." },
-              { id: 6, name: "Presentation", pdu: "Data",    color: "#ff6600", header: "Format",   desc: "Translation, Encryption and Compression.", details: ["SSL/TLS, JPEG, ASCII", "Binary Encoding"], ex: "HTTPS Encryption." },
+              { id: 6, name: "Presentation", pdu: "Data",    color: "#ff6600", header: "Format",   desc: "Translation, Encryption, Compression.", details: ["SSL/TLS, JPEG", "Binary Encoding"], ex: "HTTPS Encryption." },
               { id: 5, name: "Session",      pdu: "Data",    color: "#ffaa00", header: "Session ID", desc: "Dialogue management between apps.", details: ["Sync Tokens, RPC"], ex: "Login session." },
-              { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "TCP/UDP Ports", desc: "Segmentation and reliability.", details: ["Src/Dst Port, Seq Num"], ex: "Reliable packet transport." },
-              { id: 3, name: "Network",      pdu: "Packet",  color: "#00cc66", header: "IP Src/Dst", desc: "Logical routing (Internet).", details: ["IP v4/v6, TTL"], ex: "IP Routing." },
-              { id: 2, name: "Data Link",    pdu: "Frame",   color: "#8800ff", header: "MAC + FCS",  desc: "Physical addressing (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
-              { id: 1, name: "Physical",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Binary transmission over medium.", details: ["Voltage, Radio Waves"], ex: "RJ45 Cable." }
+              { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "TCP Ports", desc: "Segmentation and reliability.", details: ["Src/Dst Port, Seq"], ex: "Reliable transport." },
+              { id: 3, name: "Network",      pdu: "Packet",  color: "#00cc66", header: "IP Addr", desc: "Logical routing (Internet).", details: ["IP v4/v6, TTL"], ex: "IP Routing." },
+              { id: 2, name: "Data Link",    pdu: "Frame",   color: "#8800ff", header: "MAC Addr",  desc: "Physical addressing (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
+              { id: 1, name: "Physical",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Binary transmission over medium.", details: ["Voltage, Radio"], ex: "RJ45 Cable." }
             ],
             fr: [
-              { id: 7, name: "Application",  pdu: "Données", color: "#e6002e", header: "Données Brutes", desc: "Interface utilisateur. Génération.", details: ["HTTP, SMTP, DNS", "Payload Utilisateur"], ex: "Envoi d'un email." },
-              { id: 6, name: "Présentation", pdu: "Données", color: "#ff6600", header: "Formatage",   desc: "Traduction, Chiffrement et Compression.", details: ["SSL/TLS, JPEG, ASCII", "Encodage binaire"], ex: "Chiffrement HTTPS." },
-              { id: 5, name: "Session",      pdu: "Données", color: "#ffaa00", header: "ID Session", desc: "Gestion du dialogue entre applis.", details: ["Sync Tokens, RPC"], ex: "Session de login." },
-              { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "Ports TCP/UDP", desc: "Segmentation et fiabilité.", details: ["Port Src/Dst, Seq Num"], ex: "Transport fiable." },
-              { id: 3, name: "Réseau",       pdu: "Paquet",  color: "#00cc66", header: "IP Src/Dst", desc: "Routage logique (Internet).", details: ["IP v4/v6, TTL"], ex: "Routage IP." },
-              { id: 2, name: "Liaison",      pdu: "Trame",   color: "#8800ff", header: "MAC + FCS",  desc: "Adressage physique (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
-              { id: 1, name: "Physique",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Transmission binaire sur média.", details: ["Voltage, Ondes Radio"], ex: "Câble RJ45." }
+              { id: 7, name: "Application",  pdu: "Données", color: "#e6002e", header: "Brutes", desc: "Interface utilisateur. Génération.", details: ["HTTP, SMTP, DNS", "Payload"], ex: "Envoi d'un email." },
+              { id: 6, name: "Présentation", pdu: "Données", color: "#ff6600", header: "Format",   desc: "Traduction, Chiffrement, Compression.", details: ["SSL/TLS, JPEG", "Binaire"], ex: "Chiffrement HTTPS." },
+              { id: 5, name: "Session",      pdu: "Données", color: "#ffaa00", header: "ID Session", desc: "Gestion dialogue entre applis.", details: ["Sync Tokens, RPC"], ex: "Session login." },
+              { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "Ports TCP", desc: "Segmentation et fiabilité.", details: ["Port Src/Dst, Seq"], ex: "Transport fiable." },
+              { id: 3, name: "Réseau",       pdu: "Paquet",  color: "#00cc66", header: "Adr IP", desc: "Routage logique (Internet).", details: ["IP v4/v6, TTL"], ex: "Routage IP." },
+              { id: 2, name: "Liaison",      pdu: "Trame",   color: "#8800ff", header: "Adr MAC",  desc: "Adressage physique (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
+              { id: 1, name: "Physique",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Transmission binaire sur média.", details: ["Voltage, Radio"], ex: "Câble RJ45." }
+            ],
+            es: [
+              { id: 7, name: "Aplicación",   pdu: "Datos",   color: "#e6002e", header: "Brutos", desc: "Interfaz usuario. Generación.", details: ["HTTP, SMTP", "Carga Útil"], ex: "Enviar correo." },
+              { id: 6, name: "Presentación", pdu: "Datos",   color: "#ff6600", header: "Formato",    desc: "Traducción, Cifrado, Compresión.", details: ["SSL/TLS, JPEG", "Binario"], ex: "Cifrado HTTPS." },
+              { id: 5, name: "Sesión",       pdu: "Datos",   color: "#ffaa00", header: "ID Sesión",  desc: "Gestión del diálogo.", details: ["Tokens, RPC"], ex: "Login." },
+              { id: 4, name: "Transporte",   pdu: "Segmento",color: "#0099ff", header: "Puertos",desc: "Segmentación y fiabilidad.", details: ["Puerto, Secuencia"], ex: "Fiabilidad." },
+              { id: 3, name: "Red",          pdu: "Paquete", color: "#00cc66", header: "IP Addr", desc: "Enrutamiento lógico.", details: ["IP v4/v6, TTL"], ex: "Ruta IP." },
+              { id: 2, name: "Enlace",       pdu: "Trama",   color: "#8800ff", header: "MAC Addr",  desc: "Dirección física (Switch).", details: ["MAC, CRC"], ex: "Ethernet." },
+              { id: 1, name: "Física",       pdu: "Bits",    color: "#c0c0c0", header: "Señal",      desc: "Transmisión binaria.", details: ["Voltaje, Radio"], ex: "Cable RJ45." }
+            ],
+            zh: [
+              { id: 7, name: "应用层",       pdu: "数据",    color: "#e6002e", header: "原始数据",   desc: "用户界面。数据生成。", details: ["HTTP, SMTP", "负载"], ex: "发邮件。" },
+              { id: 6, name: "表示层",       pdu: "数据",    color: "#ff6600", header: "格式",       desc: "翻译、加密、压缩。", details: ["SSL/TLS, JPEG", "二进制"], ex: "HTTPS 加密。" },
+              { id: 5, name: "会话层",       pdu: "数据",    color: "#ffaa00", header: "会话 ID",    desc: "应用间对话管理。", details: ["令牌, RPC"], ex: "登录。" },
+              { id: 4, name: "传输层",       pdu: "段",      color: "#0099ff", header: "端口",desc: "分段和可靠性。", details: ["端口, 序列号"], ex: "可靠传输。" },
+              { id: 3, name: "网络层",       pdu: "包",      color: "#00cc66", header: "IP 地址", desc: "逻辑路由。", details: ["IP v4/v6"], ex: "IP 路由。" },
+              { id: 2, name: "数据链路",   pdu: "帧",      color: "#8800ff", header: "MAC 地址",  desc: "物理寻址。", details: ["MAC, CRC"], ex: "以太网。" },
+              { id: 1, name: "物理层",       pdu: "比特",    color: "#c0c0c0", header: "信号",       desc: "二进制传输。", details: ["电压"], ex: "RJ45。" }
             ]
         };
 
@@ -461,21 +598,14 @@
         let autoplayTimer = null;
         let speedMult = 1;
 
-        // Avalanche Option B
-        let avalancheEnabled = false;
-        let avalanchePackets = [];
-        let clientNode = null;
-        let serverNode = null;
-        const clientPos = new THREE.Vector3(-7, -2, -6);
-        const serverPos = new THREE.Vector3(7, -2, -6);
-        const midPos    = new THREE.Vector3(0, -0.5, 0); // passe près de la pile
-
         // 3D Variables
         let scene, camera, renderer, composer, controls;
         let packetGroup, particles, layerBoxes = [];
         let floorPlane, floorGrid;
         let lights = {};
-        let clock;
+        let stampMesh = null; 
+        
+        let matrixTexture = null;
 
         // UI Refs
         const ui = {
@@ -483,14 +613,12 @@
             subtitle: document.getElementById('app-subtitle'),
             lblMode: document.getElementById('lbl-mode'),
             modeLabel: document.getElementById('mode-toggle'),
-            
             lblPdu: document.getElementById('lbl-pdu'),
             lblHeader: document.getElementById('lbl-header'),
             lblFunction: document.getElementById('lbl-function'),
             lblDetails: document.getElementById('lbl-details'),
             lblExample: document.getElementById('lbl-example'),
             lblStack: document.getElementById('lbl-stack'),
-            
             layerTitle: document.getElementById('current-layer-title'),
             pdu: document.getElementById('pdu-display'),
             header: document.getElementById('header-display'),
@@ -500,7 +628,6 @@
             list: document.getElementById('layer-list'),
             bar: document.getElementById('progress-bar'),
             step: document.getElementById('step-counter'),
-            
             btnMain: document.getElementById('action-btn'),
             btnDecap: document.getElementById('decap-btn'),
             btnReset: document.getElementById('reset-btn'),
@@ -508,7 +635,6 @@
             btnNext: document.getElementById('next-step-btn'),
             btnAuto: document.getElementById('autoplay-btn'),
             btnExplode: document.getElementById('explode-btn'),
-            
             msg: document.getElementById('message-overlay')
         };
 
@@ -517,8 +643,14 @@
             currentLang = lang;
             const t = translations[lang];
             
-            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+            document.querySelectorAll('.btn-lang').forEach(b => b.classList.remove('active'));
+            document.getElementById('lang-' + lang).classList.add('active');
+            
+            if(lang === 'zh') {
+                document.body.classList.add('lang-zh');
+            } else {
+                document.body.classList.remove('lang-zh');
+            }
 
             ui.title.innerHTML = t.title;
             ui.subtitle.innerText = t.subtitle;
@@ -529,9 +661,6 @@
             ui.lblDetails.innerText = t.lblDetails;
             ui.lblExample.innerText = t.lblExample;
             ui.lblStack.innerText = t.lblStack;
-            
-            ui.btnBack.innerText = t.btnBack;
-            ui.btnNext.innerText = t.btnNext;
             
             if(!autoplayTimer) ui.btnAuto.innerText = t.btnAuto;
             else ui.btnAuto.innerText = t.btnStop;
@@ -554,7 +683,6 @@
         // --- INITIALIZATION ---
         function init() {
             initMatrixRain();
-            clock = new THREE.Clock();
 
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
@@ -571,14 +699,12 @@
             renderer.toneMappingExposure = 1.2;
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setClearColor(0x000000, 0); 
             
             container.appendChild(renderer.domElement);
 
             const renderPass = new THREE.RenderPass(scene, camera);
-            const bloomPass = new THREE.UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                1.5, 0.4, 0.85
-            );
+            const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.15;
             bloomPass.strength = 0.4;
             bloomPass.radius = 0.4;
@@ -615,7 +741,7 @@
             createParticles();
             setTheme('cyberpunk');
             resetGame('encap');
-            setLanguage('en');
+            setLanguage('en'); 
             animate();
             
             window.addEventListener('resize', onResize);
@@ -633,7 +759,6 @@
             document.getElementById('autoplay-btn').onclick = toggleAutoplay;
             document.getElementById('speed-btn').onclick = toggleSpeed;
             document.getElementById('explode-btn').onclick = toggleExplode;
-            document.getElementById('avalanche-btn').onclick = toggleAvalanche;
             
             document.getElementById('compare-btn').onclick = () => document.getElementById('compare-overlay').style.display = 'flex';
             document.getElementById('compare-close').onclick = () => document.getElementById('compare-overlay').style.display = 'none';
@@ -643,7 +768,6 @@
             });
         }
 
-        // --- LIGHTING ENGINE ---
         function updateLights() {
             Object.values(lights).forEach(l => scene.remove(l));
             lights = {};
@@ -651,37 +775,29 @@
             if(theme === 'mirror') {
                 const ambient = new THREE.AmbientLight(0xffffff, 1.5);
                 lights.ambient = ambient;
-                
                 const dirLight = new THREE.DirectionalLight(0xffffff, 3);
                 dirLight.position.set(5, 15, 8);
                 dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 2048;
-                dirLight.shadow.mapSize.height = 2048;
-                dirLight.shadow.bias = -0.0001;
+                dirLight.shadow.mapSize.width = 1024;
+                dirLight.shadow.mapSize.height = 1024;
                 lights.main = dirLight;
-
                 const backLight = new THREE.DirectionalLight(0xddeeff, 2);
                 backLight.position.set(-5, 5, -10);
                 lights.back = backLight;
-
             } else {
                 const ambient = new THREE.AmbientLight(0xffffff, 1.0);
                 lights.ambient = ambient;
-
                 const dirLight = new THREE.DirectionalLight(0xffffff, 4.0);
                 dirLight.position.set(5, 10, 7);
                 dirLight.castShadow = true;
                 lights.main = dirLight;
-
                 const pointLight = new THREE.PointLight(theme === 'matrix' ? 0x00ff00 : 0x00f3ff, 5, 20);
                 pointLight.position.set(-5, 2, 5);
                 lights.point = pointLight;
             }
-
             Object.values(lights).forEach(l => scene.add(l));
         }
 
-        // --- THEMES ---
         function setTheme(newTheme) {
             theme = newTheme;
             document.body.className = `theme-${theme}`;
@@ -690,20 +806,29 @@
             });
 
             const matBg = document.getElementById('matrix-bg');
-            if(matBg) matBg.style.opacity = theme === 'matrix' ? 0.3 : 0;
-
             const bgCol = getComputedStyle(document.body).getPropertyValue('--bg-color').trim();
-            scene.background = new THREE.Color(bgCol);
             
-            if(theme === 'mirror') {
+            if(theme === 'matrix') {
+                if(matBg) matBg.style.opacity = 1;
+                scene.background = null; 
+                scene.fog = null; 
+            } else if(theme === 'mirror') {
+                if(matBg) matBg.style.opacity = 0;
+                scene.background = new THREE.Color(bgCol);
                 scene.fog = new THREE.Fog(bgCol, 15, 40);
+            } else {
+                if(matBg) matBg.style.opacity = 0;
+                scene.background = new THREE.Color(bgCol);
+                scene.fog = new THREE.FogExp2(new THREE.Color(bgCol), 0.02);
+            }
+
+            if(theme === 'mirror') {
                 floorPlane.visible = true;
                 floorGrid.visible = true;
                 floorGrid.material.color.setHex(0xd1d5db);
                 floorGrid.material.opacity = 0.5;
                 composer.passes[1].strength = 0; 
             } else {
-                scene.fog = new THREE.FogExp2(new THREE.Color(bgCol), 0.02);
                 floorPlane.visible = false;
                 floorGrid.visible = true;
                 floorGrid.material.color.setHex(theme === 'matrix' ? 0x00ff00 : 0x444444);
@@ -713,22 +838,6 @@
 
             updateLights();
             rebuildSceneMaterials();
-
-            // Recolor corridor nodes + packets
-            const packetColor = (theme === 'matrix') ? 0x00ff00 : 0x00f0ff;
-            if (clientNode) {
-                clientNode.material.color.setHex(packetColor);
-                if (clientNode.material.emissive) clientNode.material.emissive.setHex(packetColor);
-            }
-            if (serverNode) {
-                serverNode.material.color.setHex(packetColor);
-                if (serverNode.material.emissive) serverNode.material.emissive.setHex(packetColor);
-            }
-            avalanchePackets.forEach(p => {
-                p.mesh.material.color.setHex(packetColor);
-                if (p.mesh.material.emissive) p.mesh.material.emissive.setHex(packetColor);
-            });
-
             updateUI(); 
         }
 
@@ -749,7 +858,7 @@
                         mesh.material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
                         if(mesh.children[0]) { mesh.children[0].visible = true; mesh.children[0].material.color.setHex(0x00ff00); }
                     } else {
-                        mesh.material = new THREE.MeshPhysicalMaterial({ 
+                         mesh.material = new THREE.MeshPhysicalMaterial({ 
                             color: 0xe6002e, 
                             emissive: 0xe6002e, 
                             emissiveIntensity: 0.5, 
@@ -770,6 +879,7 @@
                             edge.visible = true;
                             edge.material.color.setHex(parseInt(displayColor.replace('#','0x')));
                             edge.material.opacity = 0.8;
+                            edge.material.linewidth = 2;
                         } else if (theme === 'matrix') {
                             edge.visible = true;
                             edge.material.color.setHex(0x00ff00);
@@ -803,7 +913,6 @@
             }
         }
 
-        // --- 3D OBJECT LOGIC ---
         function spawnCore() {
             const geo = new THREE.OctahedronGeometry(0.6, 0); 
             const mat = new THREE.MeshStandardMaterial({ color: 0xffffff }); 
@@ -878,7 +987,71 @@
             shrink();
         }
 
-        // --- GAMEPLAY LOGIC ---
+        function createStampTexture(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 512, 512);
+            
+            const inkColor = theme === 'cyberpunk' ? '#00f0ff' : '#d9002b'; 
+            ctx.strokeStyle = inkColor;
+            ctx.lineWidth = 15;
+            ctx.beginPath();
+            ctx.arc(256, 256, 230, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeRect(80, 200, 352, 112);
+
+            ctx.fillStyle = inkColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 60px "Black Ops One", monospace';
+            ctx.fillText(text, 256, 256);
+            
+            ctx.font = 'bold 40px monospace';
+            ctx.fillText("PACKETLAB V21", 256, 140);
+            
+            const date = new Date().toLocaleDateString();
+            ctx.font = 'bold 30px monospace';
+            ctx.fillText(date, 256, 380);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        function applyStampAnimation() {
+            isAnimating = true;
+            const t = translations[currentLang];
+            const outerBox = layerBoxes[layerBoxes.length - 1];
+            const size = outerBox.geometry.parameters.width; 
+            
+            const stampTex = createStampTexture(t.stamp);
+            const stampGeo = new THREE.PlaneGeometry(size * 0.6, size * 0.6);
+            const stampMat = new THREE.MeshBasicMaterial({ 
+                map: stampTex, transparent: true, opacity: 0, 
+                side: THREE.DoubleSide, depthTest: false 
+            });
+            stampMesh = new THREE.Mesh(stampGeo, stampMat);
+            stampMesh.position.z = (size / 2) + 0.05;
+            packetGroup.add(stampMesh);
+            
+            let s = 2.0; 
+            stampMat.opacity = 0;
+            function animateStamp() {
+                s -= 0.1;
+                stampMat.opacity += 0.15;
+                stampMesh.scale.set(s, s, s);
+                if (s > 1.0) {
+                    requestAnimationFrame(animateStamp);
+                } else {
+                    stampMesh.scale.set(1, 1, 1);
+                    stampMat.opacity = 0.9;
+                    setTimeout(() => { sendAnimation(); }, 500);
+                }
+            }
+            animateStamp();
+        }
+
         function resetGame(newMode) {
             mode = newMode;
             isAnimating = false;
@@ -890,10 +1063,10 @@
             packetGroup.rotation.set(0,0,0);
             packetGroup.scale.set(1,1,1);
             packetGroup.visible = true;
+            stampMesh = null; 
 
             const t = translations[currentLang];
             ui.modeLabel.innerText = mode === 'encap' ? t.modeEncap : t.modeDecap;
-            
             ui.msg.style.opacity = 0;
             ui.btnDecap.style.display = 'none';
             ui.btnReset.style.display = 'none';
@@ -906,24 +1079,20 @@
             } else {
                 currentStep = 6;
                 spawnCore();
-                for(let i=6; i>=1; i--) {
-                    addLayer(i, true);
-                }
+                for(let i=6; i>=1; i--) addLayer(i, true);
             }
             updateUI();
         }
 
         function nextStep() {
             if(isAnimating) return;
-
             if(mode === 'encap') {
                 if(currentStep < 6) {
                     currentStep++; 
-                    const layerIdToAdd = 7 - currentStep; // 6..1
-                    addLayer(layerIdToAdd);
+                    addLayer(7 - currentStep);
                     updateUI();
                 } else {
-                    sendAnimation();
+                    applyStampAnimation();
                 }
             } else {
                 if(currentStep > 0) {
@@ -947,8 +1116,7 @@
             } else {
                 if(currentStep < 6) {
                     currentStep++;
-                    const layerIdToAdd = 7 - currentStep;
-                    addLayer(layerIdToAdd);
+                    addLayer(7 - currentStep);
                     updateUI();
                 }
             }
@@ -998,9 +1166,10 @@
             let displayColor = layer.color;
             if(theme === 'mirror' && layer.id === 1) displayColor = "#334155";
 
-            const layerName = currentLang === 'fr' && layer.id === 7 ? "APPLICATION" : layer.name.toUpperCase();
+            const layerName = layer.name.toUpperCase();
+            const layerLabel = t.layer || "LAYER";
 
-            ui.layerTitle.innerText = `${t.layer || "LAYER"} ${layer.id}: ${layerName}`;
+            ui.layerTitle.innerText = `${layerLabel} ${layer.id}: ${layerName}`;
             ui.layerTitle.style.color = displayColor;
             ui.step.innerText = (mode === 'encap' ? (currentStep + 1) : (7 - currentStep)) + " / 7";
             ui.pdu.innerText = layer.pdu;
@@ -1011,7 +1180,7 @@
             ui.ex.innerHTML = `"${layer.ex}"`;
 
             if(mode === 'encap') {
-                if(currentStep < 6 && nextLayer) ui.btnMain.innerText = `${t.btnAdd} ${nextLayer.name.toUpperCase()}`;
+                if(currentStep < 6) ui.btnMain.innerText = `${t.btnAdd} ${nextLayer.name.toUpperCase()}`;
                 else ui.btnMain.innerText = t.btnTransmit;
             } else {
                 if(currentStep > 0) ui.btnMain.innerText = `${t.btnRemove} ${layer.name.toUpperCase()}`;
@@ -1022,20 +1191,13 @@
             layers.forEach((l, idx) => {
                 const li = document.createElement('li');
                 li.className = 'layer-item';
-                
                 let itemColor = l.color;
                 if(theme === 'mirror' && l.id === 1) itemColor = "#334155";
                 li.style.color = itemColor; 
-                
                 li.innerHTML = `<span style="font-weight:900;">0${l.id}</span> ${l.name.toUpperCase()}`;
-                
                 if(l.id === layer.id) li.classList.add('active');
-                
-                let existsInStack = false;
-                if (mode === 'encap') existsInStack = (idx <= currentStep);
-                else existsInStack = (idx >= currentStep); 
-
-                li.style.opacity = existsInStack ? 1 : 0.3;
+                let existsInStack = (mode === 'encap' ? (idx <= currentStep) : (idx >= currentStep));
+                if(existsInStack) li.style.opacity = 1; else li.style.opacity = 0.3;
                 ui.list.appendChild(li);
             });
 
@@ -1084,146 +1246,6 @@
             if(autoplayTimer) { toggleAutoplay(); toggleAutoplay(); }
         }
 
-        // --- AVALANCHE OPTION B: Corridor Client <-> Server ---
-        function createEndpointNode(position, labelText) {
-            const radius = 0.45;
-            const color = (theme === 'matrix') ? 0x00ff00 : 0x00f0ff;
-            const geo = new THREE.SphereGeometry(radius, 24, 24);
-            const mat = new THREE.MeshPhysicalMaterial({
-                color,
-                emissive: color,
-                emissiveIntensity: 0.7,
-                metalness: 0.2,
-                roughness: 0.2,
-                transmission: 0.3,
-                transparent: true,
-                opacity: 0.95
-            });
-            const node = new THREE.Mesh(geo, mat);
-            node.position.copy(position);
-            node.castShadow = true;
-
-            const edge = new THREE.LineSegments(
-                new THREE.EdgesGeometry(geo),
-                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })
-            );
-            node.add(edge);
-
-            // petit "socle" en dessous
-            const baseGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 24);
-            const baseMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.1, roughness: 0.8 });
-            const base = new THREE.Mesh(baseGeo, baseMat);
-            base.position.set(0, -radius - 0.04, 0);
-            base.receiveShadow = true;
-            node.add(base);
-
-            scene.add(node);
-            return node;
-        }
-
-        function spawnAvalanchePacket() {
-            const size = 0.18;
-            const color = (theme === 'matrix') ? 0x00ff00 : 0x00f0ff;
-            const geo = new THREE.BoxGeometry(size, size, size);
-            const mat = new THREE.MeshPhysicalMaterial({
-                color,
-                emissive: color,
-                emissiveIntensity: 0.8,
-                roughness: 0.4,
-                metalness: 0.2,
-                transparent: true,
-                opacity: 0.9
-            });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.castShadow = false;
-
-            const edge = new THREE.LineSegments(
-                new THREE.EdgesGeometry(geo),
-                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
-            );
-            mesh.add(edge);
-
-            // paramètre t le long de la courbe 0→1
-            const packet = {
-                mesh,
-                t: Math.random(),
-                dir: Math.random() > 0.5 ? 1 : -1
-            };
-
-            scene.add(mesh);
-            avalanchePackets.push(packet);
-        }
-
-        function toggleAvalanche() {
-            avalancheEnabled = !avalancheEnabled;
-            const btn = document.getElementById('avalanche-btn');
-            btn.innerText = avalancheEnabled ? 'AVALANCHE ON' : 'AVALANCHE OFF';
-
-            if (avalancheEnabled) {
-                // Créer les nœuds client/serveur si pas encore faits
-                if (!clientNode) clientNode = createEndpointNode(clientPos, 'CLIENT');
-                if (!serverNode) serverNode = createEndpointNode(serverPos, 'SERVER');
-
-                if (avalanchePackets.length === 0) {
-                    for (let i = 0; i < 60; i++) spawnAvalanchePacket();
-                }
-            } else {
-                // supprimer les paquets
-                avalanchePackets.forEach(p => {
-                    scene.remove(p.mesh);
-                    p.mesh.geometry.dispose();
-                    if (p.mesh.material) p.mesh.material.dispose();
-                });
-                avalanchePackets = [];
-
-                // garder les nodes ? on les enlève pour être propre
-                if (clientNode) {
-                    scene.remove(clientNode);
-                    clientNode.geometry.dispose();
-                    clientNode = null;
-                }
-                if (serverNode) {
-                    scene.remove(serverNode);
-                    serverNode.geometry.dispose();
-                    serverNode = null;
-                }
-            }
-        }
-
-        function getBezierPoint(start, mid, end, t) {
-            // Quadratic Bezier: B(t) = (1-t)^2*start + 2(1-t)t*mid + t^2*end
-            const u = 1 - t;
-            const p = new THREE.Vector3();
-            p.copy(start).multiplyScalar(u * u);
-            p.add(mid.clone().multiplyScalar(2 * u * t));
-            p.add(end.clone().multiplyScalar(t * t));
-            return p;
-        }
-
-        function updateAvalanche(dt) {
-            if (!avalancheEnabled) return;
-            const baseSpeed = 0.7 * speedMult; // en t / seconde
-
-            avalanchePackets.forEach(p => {
-                p.t += baseSpeed * dt;
-                if (p.t > 1) p.t -= 1;
-
-                const tEff = p.dir > 0 ? p.t : 1 - p.t;
-                const pos = getBezierPoint(clientPos, midPos, serverPos, tEff);
-                p.mesh.position.copy(pos);
-
-                // légère oscillation pour le style
-                p.mesh.position.y += Math.sin((p.t + pos.x) * 10) * 0.05;
-                p.mesh.rotation.x += 3 * dt;
-                p.mesh.rotation.y += 4 * dt;
-            });
-
-            // petite pulsation sur les nœuds
-            const time = performance.now() * 0.001;
-            if (clientNode) clientNode.scale.setScalar(1 + Math.sin(time * 3) * 0.05);
-            if (serverNode) serverNode.scale.setScalar(1 + Math.cos(time * 3) * 0.05);
-        }
-
         function createParticles() {
             const geo = new THREE.BufferGeometry();
             const pos = new Float32Array(2000 * 3);
@@ -1234,7 +1256,6 @@
             scene.add(particles);
         }
 
-        // --- MATRIX RAIN CANVAS ---
         function initMatrixRain() {
             const canvas = document.getElementById('matrix-bg');
             if(!canvas) return;
@@ -1245,36 +1266,37 @@
                 canvas.height = window.innerHeight;
             };
             setSize();
+            window.addEventListener('resize', setSize);
             
-            const letters = '01XYZAﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ1234567890';
+            const chars = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const charArray = chars.split('');
             const fontSize = 16;
             let columns = canvas.width / fontSize;
             let drops = [];
             
             const resetDrops = () => {
                 columns = canvas.width / fontSize;
-                drops = Array(Math.floor(columns)).fill(1);
+                drops = [];
+                for(let x=0; x<columns; x++) drops[x] = 1;
             };
             resetDrops();
+            window.addEventListener('resize', resetDrops);
 
             function drawMatrix() {
-                if(theme !== 'matrix') {
-                    ctx.clearRect(0,0,canvas.width, canvas.height);
-                    return;
-                }
+                if(theme !== 'matrix') return;
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#0F0';
                 ctx.font = fontSize + 'px monospace';
                 for(let i=0; i<drops.length; i++) {
-                    const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                    const text = charArray[Math.floor(Math.random() * charArray.length)];
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
                     if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 }
+                if(matrixTexture) matrixTexture.needsUpdate = true;
             }
             setInterval(drawMatrix, 33);
-            window.addEventListener('resize', resetDrops);
         }
 
         function onResize() {
@@ -1291,8 +1313,6 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            const dt = clock.getDelta();
-
             controls.update();
             const time = Date.now() * 0.001;
             
@@ -1300,9 +1320,9 @@
                 if(!isExploded) {
                     packetGroup.position.y = Math.sin(time * 0.5) * 0.2;
                     if(theme === 'mirror') {
-                        if(layerBoxes.length > 0) {
+                         if(layerBoxes.length > 0) {
                             layerBoxes.forEach((b, i) => {
-                                b.rotation.z = Math.sin(time * 0.5 + i) * 0.02;
+                                 b.rotation.z = Math.sin(time * 0.5 + i) * 0.02;
                             });
                         }
                     } else {
@@ -1312,9 +1332,11 @@
                     packetGroup.position.y = 0;
                 }
             }
-
-            updateAvalanche(dt);
-            composer.render();
+            if (theme === 'matrix') {
+                renderer.render(scene, camera); 
+            } else {
+                composer.render(); 
+            }
         }
 
         init();
@@ -1322,4 +1344,3 @@
   </script>
 </body>
 </html>
-
