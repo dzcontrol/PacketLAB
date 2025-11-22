@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PacketLab V1.4 - The Network Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #fce300;
+            --dark-bg: #050508;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* --- GLITCH EFFECT (SLOWED DOWN) --- */
+        .glitch-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch {
+            font-size: 4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 2px 2px 0px var(--neon-pink), -2px -2px 0px var(--neon-cyan);
+            /* Ralenti à 5s pour plus de lisibilité */
+            animation: glitch-skew 5s infinite linear alternate-reverse;
+        }
+        .glitch::before {
+            content: attr(data-text);
+            position: absolute;
+            left: -2px;
+            text-shadow: 1px 0 var(--neon-pink);
+            top: 0;
+            color: white;
+            background: var(--dark-bg);
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+            /* Ralenti à 4s */
+            animation: glitch-anim 4s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 2px;
+            text-shadow: -1px 0 var(--neon-cyan);
+            top: 0;
+            color: white;
+            background: var(--dark-bg);
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+            /* Ralenti à 6s */
+            animation: glitch-anim2 6s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(34px, 9999px, 11px, 0); }
+            20% { clip: rect(68px, 9999px, 87px, 0); }
+            40% { clip: rect(15px, 9999px, 43px, 0); }
+            60% { clip: rect(89px, 9999px, 33px, 0); }
+            80% { clip: rect(2px, 9999px, 66px, 0); }
+            100% { clip: rect(55px, 9999px, 92px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(12px, 9999px, 56px, 0); }
+            20% { clip: rect(44px, 9999px, 12px, 0); }
+            40% { clip: rect(88px, 9999px, 33px, 0); }
+            60% { clip: rect(2px, 9999px, 77px, 0); }
+            80% { clip: rect(55px, 9999px, 11px, 0); }
+            100% { clip: rect(32px, 9999px, 99px, 0); }
+        }
+        @keyframes glitch-skew {
+            0% { transform: skew(1deg); }
+            20% { transform: skew(-1deg); }
+            40% { transform: skew(0deg); }
+            60% { transform: skew(2deg); }
+            80% { transform: skew(-1deg); }
+            100% { transform: skew(0deg); }
+        }
+
+        /* --- BUTTONS --- */
+        .cyber-btn {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        }
+        .cyber-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-cyan);
+            text-shadow: none;
+        }
+        
+        .code-btn {
+            padding: 15px 40px;
+            border: 1px solid #666;
+            color: #aaa;
+            font-family: 'Share Tech Mono', monospace;
+            background: transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .code-btn:hover {
+            border-color: white;
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .cyber-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            transition: transform 0.3s, border-color 0.3s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .cyber-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+        
+        .lang-btn {
+            border: 1px solid #444;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            color: #888;
+            transition: all 0.2s;
+        }
+        .lang-btn.active, .lang-btn:hover {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        /* --- GRID --- */
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) scale(2);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        /* Mobile Tweaks */
+        @media(max-width: 768px){
+            .glitch { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- BACKGROUND 3D -->
+    <div id="bg-canvas" class="fixed inset-0 z-[-1]"></div>
+    <div class="bg-grid"></div>
+
+    <!-- NAVBAR -->
+    <nav class="flex justify-between items-center p-6 border-b border-gray-800 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="text-2xl font-bold text-white tracking-widest">PACKET<span style="color:var(--neon-cyan)">LAB</span></div>
+        <div class="hidden md:flex gap-6 text-sm font-bold tracking-wider items-center">
+            <a href="#features" class="hover:text-cyan-400 transition" id="nav-features">FEATURES</a>
+            <a href="#about" class="hover:text-cyan-400 transition" id="nav-about">ABOUT</a>
+            <div class="flex gap-1 ml-4 border-l border-gray-700 pl-4">
+                <button class="lang-btn active" onclick="setLang('en')">EN</button>
+                <button class="lang-btn" onclick="setLang('fr')">FR</button>
+            </div>
+        </div>
+        <button class="border border-white px-4 py-1 text-xs font-bold hover:bg-white hover:text-black transition">V1.4 GEM</button>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="flex flex-col items-center justify-center text-center min-h-[80vh] px-4 relative">
+        <div class="mb-4 text-cyan-400 font-mono tracking-[0.3em] text-sm" id="hero-subtitle">NEXT-GEN NETWORK VISUALIZATION</div>
+        
+        <div class="glitch-wrapper mb-8">
+            <h1 class="glitch" data-text="MAKE THE INVISIBLE" id="hero-title-1">MAKE THE INVISIBLE</h1>
+            <h1 class="glitch text-transparent" style="-webkit-text-stroke: 1px white; opacity: 0.5;" data-text="VISIBLE" id="hero-title-2">VISIBLE</h1>
+        </div>
+        
+        <p class="max-w-2xl text-gray-400 text-lg mb-10 font-light leading-relaxed" id="hero-desc">
+            Finally understand the OSI model. <strong class="text-white">PacketLab V1.4</strong> transforms abstract theory into an immersive 3D experience. 
+            Encapsulation, headers, frames... touch the network.
+        </p>
+        
+        <div class="flex flex-col md:flex-row gap-4">
+            <a href="PacketLab_V1.4_Master_Final.html" target="_blank">
+                <button class="cyber-btn" id="btn-launch">LAUNCH APP ⚡</button>
+            </a>
+            <a href="https://github.com/dzcontrol/PacketLAB" target="_blank">
+                <button class="code-btn" id="btn-code">VIEW CODE</button>
+            </a>
+        </div>
+    </section>
+
+    <!-- FEATURES GRID -->
+    <section id="features" class="py-20 px-6 max-w-7xl mx-auto w-full">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Feature 1 -->
+            <div class="cyber-card">
+                <div class="text-4xl mb-4">💎</div>
+                <h3 class="text-xl text-cyan-400 mb-2" id="feat-1-title">Data Core</h3>
+                <p class="text-sm text-gray-400 flex-grow" id="feat-1-desc">Data is no longer an abstract cube. It's a precious "Diamond" that each layer protects. A powerful visual metaphor validated by experts.</p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="cyber-card">
+                <div class="text-4xl mb-4">🌧️</div>
+                <h3 class="text-xl text-green-400 mb-2" id="feat-2-title">Matrix Mode</h3>
+                <p class="text-sm text-gray-400 flex-grow" id="feat-2-desc">Dive into the code. Activate the "Matrix" theme to see digital data rain in the background of your 3D laboratory.</p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="cyber-card">
+                <div class="text-4xl mb-4">📱</div>
+                <h3 class="text-xl text-pink-500 mb-2" id="feat-3-title">100% Mobile First</h3>
+                <p class="text-sm text-gray-400 flex-grow" id="feat-3-desc">Study anywhere. The interface adapts intelligently: thumb controls, optical centering of the model, and simplified navigation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- EXPERT SECTION -->
+    <section id="about" class="py-20 border-t border-gray-800 bg-black/30">
+        <div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center gap-10">
+            <div class="flex-1 text-center md:text-left">
+                <h2 class="text-3xl mb-6" id="expert-title">Validated by Pedagogy</h2>
+                <p class="text-gray-300 mb-4 leading-relaxed" id="expert-text">
+                    PacketLab is designed to bridge the gap between academic theory and technical reality, making complex networking concepts accessible to everyone.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-10 text-center text-xs text-gray-600 font-mono border-t border-gray-900">
+        <p>PACKETLAB V1.4 GEM EDITION // OPEN SOURCE PROJECT</p>
+        <p class="mt-2" id="footer-text">Developed with Three.js & Passion</p>
+    </footer>
+
+    <!-- BACKGROUND ANIMATION SCRIPT & LANG -->
+    <script>
+        // Translations
+        const translations = {
+            en: {
+                navFeatures: "FEATURES",
+                navAbout: "ABOUT",
+                heroSubtitle: "NEXT-GEN NETWORK VISUALIZATION",
+                heroTitle1: "MAKE THE INVISIBLE",
+                heroTitle2: "VISIBLE",
+                heroDesc: "Finally understand the OSI model. <strong class='text-white'>PacketLab V1.4</strong> transforms abstract theory into an immersive 3D experience. Encapsulation, headers, frames... touch the network.",
+                btnLaunch: "LAUNCH APP ⚡",
+                btnCode: "VIEW CODE",
+                feat1Title: "Data Core",
+                feat1Desc: "Data is no longer an abstract cube. It's a precious \"Diamond\" that each layer protects. A powerful visual metaphor validated by experts.",
+                feat2Title: "Matrix Mode",
+                feat2Desc: "Dive into the code. Activate the \"Matrix\" theme to see digital data rain in the background of your 3D laboratory.",
+                feat3Title: "100% Mobile First",
+                feat3Desc: "Study anywhere. The interface adapts intelligently: thumb controls, optical centering of the model, and simplified navigation.",
+                expertTitle: "Validated by Pedagogy",
+                expertText: "PacketLab is designed to bridge the gap between academic theory and technical reality, making complex networking concepts accessible to everyone.",
+                footerText: "Developed with Three.js & Passion"
+            },
+            fr: {
+                navFeatures: "FONCTIONNALITÉS",
+                navAbout: "À PROPOS",
+                heroSubtitle: "VISUALISATION RÉSEAU NEXT-GEN",
+                heroTitle1: "RENDRE L'INVISIBLE",
+                heroTitle2: "VISIBLE",
+                heroDesc: "Comprenez enfin le modèle OSI. <strong class='text-white'>PacketLab V1.4</strong> transforme la théorie abstraite en une expérience 3D immersive. Encapsulation, headers, trames... touchez le réseau du doigt.",
+                btnLaunch: "LANCER L'APP ⚡",
+                btnCode: "VOIR LE CODE",
+                feat1Title: "Cœur de Donnée",
+                feat1Desc: "La donnée n'est plus un cube abstrait. C'est un \"Diamant\" précieux que chaque couche protège. Une métaphore visuelle puissante validée par les experts.",
+                feat2Title: "Mode Matrix",
+                feat2Desc: "Plongez dans le code. Activez le thème \"Matrix\" pour voir la pluie de données numériques en arrière-plan de votre laboratoire 3D.",
+                feat3Title: "100% Mobile First",
+                feat3Desc: "Étudiez partout. L'interface s'adapte intelligemment : contrôles au pouce, centrage optique du modèle et navigation simplifiée.",
+                expertTitle: "Validé par la Pédagogie",
+                expertText: "PacketLab est conçu pour combler le fossé entre la théorie académique et la réalité technique, rendant les concepts réseaux complexes accessibles à tous.",
+                footerText: "Développé avec Three.js & Passion"
+            }
+        };
+
+        function setLang(lang) {
+            const t = translations[lang];
+            
+            // Update Text
+            document.getElementById('nav-features').innerText = t.navFeatures;
+            document.getElementById('nav-about').innerText = t.navAbout;
+            document.getElementById('hero-subtitle').innerText = t.heroSubtitle;
+            document.querySelector('.glitch').setAttribute('data-text', t.heroTitle1);
+            document.querySelector('.glitch').innerText = t.heroTitle1;
+            
+            const glitch2 = document.querySelectorAll('.glitch')[1];
+            glitch2.setAttribute('data-text', t.heroTitle2);
+            glitch2.innerText = t.heroTitle2;
+
+            document.getElementById('hero-desc').innerHTML = t.heroDesc;
+            document.getElementById('btn-launch').innerText = t.btnLaunch;
+            document.getElementById('btn-code').innerText = t.btnCode;
+            
+            document.getElementById('feat-1-title').innerText = t.feat1Title;
+            document.getElementById('feat-1-desc').innerText = t.feat1Desc;
+            document.getElementById('feat-2-title').innerText = t.feat2Title;
+            document.getElementById('feat-2-desc').innerText = t.feat2Desc;
+            document.getElementById('feat-3-title').innerText = t.feat3Title;
+            document.getElementById('feat-3-desc').innerText = t.feat3Desc;
+            
+            document.getElementById('expert-title').innerText = t.expertTitle;
+            document.getElementById('expert-text').innerText = t.expertText;
+            document.getElementById('footer-text').innerText = t.footerText;
+
+            // Update Buttons State
+            const btns = document.querySelectorAll('.lang-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            // Assuming simple index based on order in HTML (0=EN, 1=FR)
+            if(lang === 'en') btns[0].classList.add('active');
+            else btns[1].classList.add('active');
+        }
+
+        // Simple Three.js floating particles background
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('bg-canvas').appendChild(renderer.domElement);
+
+        // Particles
+        const geometry = new THREE.BufferGeometry();
+        const particlesCount = 300;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 20; 
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0x00f0ff,
+            transparent: true,
+            opacity: 0.4
+        });
+        const particlesMesh = new THREE.Points(geometry, material);
+        scene.add(particlesMesh);
+
+        camera.position.z = 5;
+
+        // Mouse interaction
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX / window.innerWidth - 0.5;
+            mouseY = event.clientY / window.innerHeight - 0.5;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            particlesMesh.rotation.y += 0.001;
+            particlesMesh.rotation.x += 0.0005;
+
+            // Subtle parallax
+            camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize handle
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
