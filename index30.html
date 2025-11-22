@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PacketLab · V1 (Multi-Lang)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Three.js Core & Addons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- RectAreaLight for Mirror Mode -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lights/RectAreaLightUniformsLib.js"></script>
+  
+  <!-- Post-Processing (Bloom/Glow) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Roboto:wght@300;400;700&display=swap");
+
+    /* --- THEME VARIABLES --- */
+    :root {
+        /* --- DEFAULT (CYBERPUNK) --- */
+        --bg-color: #050508;
+        --text-main: #ffffff;
+        --text-muted: #94a3b8;
+        --panel-bg: rgba(4, 12, 24, 0.95);
+        --panel-border: #00f0ff;
+        --accent-primary: #00f0ff;
+        --accent-secondary: #ff0055;
+        --btn-bg-start: rgba(0, 240, 255, 0.1);
+        --btn-bg-end: rgba(0, 240, 255, 0.3);
+        --font-ui: "Orbitron", sans-serif;
+        --font-data: "Share Tech Mono", monospace;
+        --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.2);
+    }
+
+    body.theme-mirror {
+        /* --- MIRROR EDGE --- */
+        --bg-color: #f0f2f5;
+        --text-main: #1a1a1a;
+        --text-muted: #64748b;
+        --panel-bg: rgba(255, 255, 255, 0.9);
+        --panel-border: #e2e8f0;
+        --accent-primary: #d9002b;
+        --accent-secondary: #f59e0b;
+        --btn-bg-start: rgba(217, 0, 43, 0.1);
+        --btn-bg-end: rgba(217, 0, 43, 0.2);
+        --font-ui: "Rajdhani", sans-serif;
+        --font-data: "Roboto", sans-serif;
+        --shadow-glow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    body.theme-matrix {
+        /* --- MATRIX --- */
+        --bg-color: #000000;
+        --text-main: #00ff41;
+        --text-muted: #008f11;
+        --panel-bg: rgba(0, 20, 0, 0.92);
+        --panel-border: #00ff41;
+        --accent-primary: #00ff41;
+        --accent-secondary: #ccffcc;
+        --btn-bg-start: rgba(0, 255, 65, 0.1);
+        --btn-bg-end: rgba(0, 255, 65, 0.2);
+        --font-ui: "Courier New", monospace;
+        --font-data: "Courier New", monospace;
+        --shadow-glow: 0 0 15px rgba(0, 255, 65, 0.4);
+    }
+
+    body {
+        margin: 0; overflow: hidden;
+        background-color: var(--bg-color);
+        font-family: var(--font-ui);
+        color: var(--text-main);
+        transition: background-color 0.5s, color 0.5s;
+    }
+
+    #canvas-container { position: absolute; inset: 0; z-index: 2; }
+    #matrix-bg { position: absolute; inset: 0; z-index: 1; opacity: 0; pointer-events: none; background: black; transition: opacity 0.5s; }
+
+    /* --- UI LAYOUT --- */
+    #ui-layer {
+        position: absolute; inset: 0; pointer-events: none;
+        display: flex; flex-direction: column; justify-content: space-between;
+        padding: 16px; z-index: 20;
+    }
+
+    .panel {
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        padding: 20px; pointer-events: auto;
+        backdrop-filter: blur(12px);
+        box-shadow: var(--shadow-glow);
+        transition: all 0.3s ease;
+        border-radius: 4px;
+    }
+    
+    body.theme-mirror .panel {
+        border-left: 4px solid var(--accent-primary);
+        border-radius: 0px;
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; color: var(--accent-primary); margin: 0; line-height: 1;}
+    h2 { font-size: 1.2rem; font-weight: 700; color: var(--accent-secondary); margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* Buttons */
+    .btn-action {
+        background: linear-gradient(90deg, var(--btn-bg-start), var(--btn-bg-end));
+        border: 2px solid var(--accent-primary);
+        color: var(--text-main);
+        padding: 14px; width: 100%;
+        font-family: var(--font-ui); font-weight: 800; font-size: 1rem;
+        text-transform: uppercase; letter-spacing: 1px;
+        cursor: pointer; transition: all 0.2s;
+        margin-top: 12px; position: relative; overflow: hidden;
+    }
+    
+    body.theme-mirror .btn-action {
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        border-radius: 0;
+        box-shadow: 0 4px 6px rgba(255, 0, 51, 0.2);
+    }
+    body.theme-mirror .btn-action:hover {
+        background: #b30024;
+        transform: translateY(-1px);
+    }
+    
+    .btn-action:hover {
+        background: var(--accent-primary);
+        color: var(--bg-color);
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 20px var(--accent-primary);
+    }
+    .btn-action:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+
+    .btn-nav {
+        background: rgba(0,0,0,0.05); border: 1px solid var(--panel-border);
+        color: var(--text-main); padding: 8px 12px; font-size: 0.8rem;
+        font-weight: 700; cursor: pointer; text-transform: uppercase; flex: 1;
+        transition: all 0.2s;
+    }
+    .btn-nav:hover { background: var(--accent-primary); color: var(--bg-color); border-color: var(--accent-primary); }
+
+    .btn-theme {
+        font-size: 0.7rem; padding: 6px 12px; border: 1px solid var(--panel-border);
+        background: transparent; color: var(--text-muted); cursor: pointer;
+        opacity: 0.8; transition: all 0.2s; margin-right: 4px;
+    }
+    .btn-theme:hover, .btn-theme.active { opacity: 1; color: var(--bg-color); background: var(--accent-primary); border-color: var(--accent-primary); font-weight: bold; }
+    
+    /* Lang Buttons */
+    .btn-lang {
+        font-size: 0.7rem; padding: 4px 8px; border: 1px solid var(--panel-border);
+        background: transparent; color: var(--text-muted); cursor: pointer;
+        opacity: 0.6; transition: all 0.2s;
+    }
+    .btn-lang.active { opacity: 1; background: var(--accent-primary); color: var(--bg-color); font-weight: bold; }
+
+    /* List */
+    #layer-list { list-style: none; padding: 0; margin: 0; }
+    .layer-item {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--panel-border);
+        font-size: 0.9rem; display: flex; justify-content: space-between;
+        opacity: 0.5; transition: all 0.3s; font-family: var(--font-data);
+        font-weight: 600;
+    }
+    .layer-item:hover { opacity: 1; background: rgba(128,128,128,0.05); }
+    .layer-item.active {
+        opacity: 1;
+        background: linear-gradient(90deg, rgba(128,128,128,0.1), transparent);
+        font-weight: bold;
+        border-left: 4px solid currentColor;
+        padding-left: 16px;
+    }
+    .layer-item.completed { opacity: 1; }
+
+    /* Info */
+    .info-block {
+        background: rgba(128,128,128,0.08); border: 1px solid var(--panel-border);
+        padding: 10px; margin-bottom: 10px; font-size: 0.85rem;
+        color: var(--text-muted); font-family: var(--font-data);
+        border-left: 3px solid var(--accent-secondary);
+    }
+    .info-label {
+        font-size: 0.7rem; color: var(--accent-primary); font-weight: bold;
+        text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;
+    }
+
+    #message-overlay {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        font-size: 3rem; font-weight: 900; color: var(--accent-primary);
+        text-shadow: 0 0 30px var(--accent-primary);
+        pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 50;
+        background: rgba(0,0,0,0.9); padding: 40px; border: 3px solid var(--accent-primary);
+    }
+    
+    body.theme-mirror #message-overlay {
+        background: transparent;
+        border: none;
+        font-family: 'Rajdhani', sans-serif;
+        color: #ff0033;
+        font-size: 5rem;
+        text-shadow: 3px 3px 0px #fff, -1px -1px 0 #fff, 1px -1px 0 #fff;
+    }
+    
+    #compare-overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+        display: none; align-items: center; justify-content: center; z-index: 100; pointer-events: auto;
+    }
+    #compare-box {
+        max-width: 800px; width: 95%; background: var(--bg-color);
+        border: 1px solid var(--accent-primary); padding: 25px;
+        box-shadow: 0 0 50px rgba(0,0,0,0.2);
+    }
+    table { width: 100%; border-collapse: collapse; color: var(--text-muted); font-size: 0.9rem; }
+    th, td { border: 1px solid var(--panel-border); padding: 10px; text-align: left; }
+    th { color: var(--accent-primary); background: rgba(128,128,128,0.05); }
+
+    @media (max-width: 768px) { .panel { max-width: 100%; padding: 15px; } h1 { font-size: 1.2rem; } }
+  </style>
+</head>
+
+<body class="theme-cyberpunk">
+
+  <canvas id="matrix-bg"></canvas>
+  <div id="canvas-container"></div>
+  <div id="message-overlay">TRANSMITTED!</div>
+
+  <!-- Modal Compare -->
+  <div id="compare-overlay">
+    <div id="compare-box">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="compare-title">COMPARISON OSI vs TCP/IP</h2>
+        <button id="compare-close" class="btn-nav" style="flex:0; padding: 5px 10px;">X</button>
+      </div>
+      <table>
+        <thead><tr><th>OSI</th><th id="compare-role">Role</th><th>TCP/IP</th></tr></thead>
+        <tbody>
+          <tr><td>7. Application</td><td>Web/Mail</td><td rowspan="3">Application</td></tr>
+          <tr><td>6. Presentation</td><td>Format</td></tr>
+          <tr><td>5. Session</td><td>Dialogue</td></tr>
+          <tr><td>4. Transport</td><td id="compare-transport">Reliability</td><td>Transport</td></tr>
+          <tr><td>3. Network</td><td id="compare-internet">Routing IP</td><td>Internet</td></tr>
+          <tr><td>2. Data Link</td><td>MAC / Switch</td><td rowspan="2" id="compare-net-access">Network Access</td></tr>
+          <tr><td>1. Physical</td><td>Cables</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="ui-layer">
+    <!-- Top Bar -->
+    <div class="panel self-start flex flex-col md:flex-row gap-6 items-center shadow-lg">
+      <div>
+          <h1 class="text-2xl" id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V1</span></h1>
+          <div id="app-subtitle" class="text-[0.7rem] tracking-widest mt-1" style="color: var(--text-muted);">NETWORK FLOW VISUALIZER</div>
+      </div>
+      
+      <div class="flex flex-col gap-2">
+          <div class="flex justify-between items-center">
+             <div class="flex gap-1">
+                  <button class="btn-theme active" data-theme="cyberpunk">CYBER</button>
+                  <button class="btn-theme" data-theme="mirror">MIRROR</button>
+                  <button class="btn-theme" data-theme="matrix">MATRIX</button>
+             </div>
+             <!-- Language Selector -->
+             <div class="flex gap-1 ml-4 border-l border-gray-700 pl-4">
+                 <button class="btn-lang active" id="lang-en" onclick="setLanguage('en')">EN</button>
+                 <button class="btn-lang" id="lang-fr" onclick="setLanguage('fr')">FR</button>
+             </div>
+          </div>
+          
+          <div>
+              <span id="lbl-mode" class="text-[0.65rem] uppercase font-bold mr-2 opacity-70">MODE:</span>
+              <button id="mode-toggle" class="text-xs font-bold uppercase hover:underline" style="color: var(--accent-secondary);">ENCAPSULATION</button>
+          </div>
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="panel self-end mt-auto md:w-96 w-full shadow-2xl">
+        <div class="border-b border-gray-700 pb-3 mb-4 flex justify-between items-end" style="border-color: var(--panel-border);">
+            <h2 id="current-layer-title" style="margin:0;">LAYER 7: APPLICATION</h2>
+            <span id="step-counter" class="text-sm font-mono opacity-70">1 / 7</span>
+        </div>
+
+        <div class="flex justify-between mb-5">
+            <div>
+                <span id="lbl-pdu" class="info-label">PDU (UNIT)</span>
+                <div id="pdu-display" class="text-xl font-bold" style="color: var(--text-main);">Data</div>
+            </div>
+            <div class="text-right">
+                <span id="lbl-header" class="info-label">ADDED HEADER</span>
+                <div id="header-display" class="text-md font-mono" style="color: var(--accent-primary);">Raw Data</div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <span id="lbl-function" class="info-label">FUNCTION</span>
+            <p id="desc-display" class="text-sm leading-snug" style="color: var(--text-muted);">User interface generation.</p>
+        </div>
+
+        <div class="info-block">
+            <span id="lbl-details" class="info-label">TECHNICAL DETAILS</span>
+            <div id="header-details">HTTP, SMTP...</div>
+        </div>
+        
+        <div class="info-block">
+            <span id="lbl-example" class="info-label">REAL WORLD EXAMPLE</span>
+            <div id="examples-details">Opening a web page.</div>
+        </div>
+
+        <button id="action-btn" class="btn-action">ENCAPSULATE (LAYER 6)</button>
+
+        <div class="flex gap-3 mt-4">
+            <button id="prev-step-btn" class="btn-nav">◀ BACK</button>
+            <button id="next-step-btn" class="btn-nav">NEXT ▶</button>
+        </div>
+
+        <div class="flex gap-2 mt-3 flex-wrap">
+            <button id="autoplay-btn" class="btn-nav" style="border-color: var(--accent-primary);">▶ AUTO</button>
+            <button id="speed-btn" class="btn-nav" style="flex:0 0 60px;">1x</button>
+            <button id="avalanche-btn" class="btn-nav text-xs" style="flex:0 0 120px;">AVALANCHE OFF</button>
+            <button id="explode-btn" class="btn-nav text-xs">EXPLODED VIEW</button>
+            <button id="compare-btn" class="btn-nav text-xs">TCP/IP</button>
+        </div>
+        
+        <!-- Hidden Buttons -->
+        <button id="decap-btn" class="btn-action mt-2" style="display:none; background: var(--accent-secondary); border-color: var(--text-main); color: var(--text-main);">DECAPSULATION MODE</button>
+        <button id="reset-btn" class="btn-action mt-2" style="display:none; background: #0f172a; color: #fff; border: 1px solid #333;">RESET</button>
+    </div>
+
+    <!-- Left Stack -->
+    <div class="panel absolute left-4 top-36 bottom-40 w-64 overflow-y-auto hidden md:block shadow-lg">
+        <div class="border-b pb-2 mb-2 flex justify-between items-center" style="border-color: var(--panel-border);">
+            <h3 id="lbl-stack" class="text-xs font-bold tracking-widest" style="color: var(--accent-primary);">PROTOCOL STACK</h3>
+        </div>
+        <ul id="layer-list"></ul>
+        <div class="mt-4 w-full h-2 rounded overflow-hidden" style="background: rgba(128,128,128,0.2);">
+            <div id="progress-bar" class="h-full transition-all duration-500" style="width: 0%; background: var(--accent-primary);"></div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    // GLOBAL FUNCTIONS
+    let setLanguage; 
+
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- LOCALIZATION DATA ---
+        const translations = {
+            en: {
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1</span>",
+                subtitle: "NETWORK FLOW VISUALIZER",
+                lblMode: "MODE:",
+                modeEncap: "ENCAPSULATION",
+                modeDecap: "DECAPSULATION",
+                lblPdu: "PDU (UNIT)",
+                lblHeader: "ADDED HEADER",
+                lblFunction: "FUNCTION",
+                lblDetails: "TECHNICAL DETAILS",
+                lblExample: "REAL WORLD EXAMPLE",
+                lblStack: "PROTOCOL STACK",
+                btnEncapStart: "ENCAPSULATE (LAYER 6)",
+                btnTransmit: "TRANSMIT (PHYSICAL)",
+                btnAdd: "ADD",
+                btnRemove: "REMOVE",
+                btnAccess: "ACCESS DATA",
+                btnBack: "◀ BACK",
+                btnNext: "NEXT ▶",
+                btnAuto: "▶ AUTO",
+                btnStop: "⏹ STOP",
+                btnExplodeOn: "EXPLODED: ON",
+                btnExplodeOff: "EXPLODED: OFF",
+                btnReset: "RESET",
+                btnDecapMode: "DECAPSULATION MODE",
+                msgSending: "SENDING...",
+                msgSent: "SENT!",
+                msgReceived: "DATA RECEIVED!",
+                compareTitle: "COMPARISON OSI vs TCP/IP",
+                compareRole: "Role",
+                compareTransport: "Reliability",
+                compareInternet: "Internet",
+                compareNetAccess: "Network Access"
+            },
+            fr: {
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1</span>",
+                subtitle: "VISUALISATION DE FLUX RÉSEAU",
+                lblMode: "MODE :",
+                modeEncap: "ENCAPSULATION",
+                modeDecap: "DÉCAPSULATION",
+                lblPdu: "PDU (UNITÉ)",
+                lblHeader: "EN-TÊTE AJOUTÉ",
+                lblFunction: "FONCTION",
+                lblDetails: "DÉTAILS TECHNIQUES",
+                lblExample: "EXEMPLE RÉEL",
+                lblStack: "PILE PROTOCOLAIRE",
+                btnEncapStart: "ENCAPSULER (COUCHE 6)",
+                btnTransmit: "TRANSMETTRE (PHYSIQUE)",
+                btnAdd: "AJOUTER",
+                btnRemove: "RETIRER",
+                btnAccess: "ACCÉDER AUX DONNÉES",
+                btnBack: "◀ RETOUR",
+                btnNext: "SUIVANT ▶",
+                btnAuto: "▶ AUTO",
+                btnStop: "⏹ STOP",
+                btnExplodeOn: "VUE ÉCLATÉE : ON",
+                btnExplodeOff: "VUE ÉCLATÉE : OFF",
+                btnReset: "RÉINITIALISER",
+                btnDecapMode: "MODE DÉCAPSULATION",
+                msgSending: "ENVOI EN COURS...",
+                msgSent: "ENVOYÉ !",
+                msgReceived: "DONNÉES REÇUES !",
+                compareTitle: "COMPARATIF OSI vs TCP/IP",
+                compareRole: "Rôle",
+                compareTransport: "Fiabilité",
+                compareInternet: "Internet",
+                compareNetAccess: "Accès Réseau"
+            }
+        };
+
+        const osiData = {
+            en: [
+              { id: 7, name: "Application",  pdu: "Data",    color: "#e6002e", header: "Raw Data", desc: "User interface. Data generation.", details: ["HTTP, SMTP, DNS", "User Payload"], ex: "Sending an email." },
+              { id: 6, name: "Presentation", pdu: "Data",    color: "#ff6600", header: "Format",   desc: "Translation, Encryption and Compression.", details: ["SSL/TLS, JPEG, ASCII", "Binary Encoding"], ex: "HTTPS Encryption." },
+              { id: 5, name: "Session",      pdu: "Data",    color: "#ffaa00", header: "Session ID", desc: "Dialogue management between apps.", details: ["Sync Tokens, RPC"], ex: "Login session." },
+              { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "TCP/UDP Ports", desc: "Segmentation and reliability.", details: ["Src/Dst Port, Seq Num"], ex: "Reliable packet transport." },
+              { id: 3, name: "Network",      pdu: "Packet",  color: "#00cc66", header: "IP Src/Dst", desc: "Logical routing (Internet).", details: ["IP v4/v6, TTL"], ex: "IP Routing." },
+              { id: 2, name: "Data Link",    pdu: "Frame",   color: "#8800ff", header: "MAC + FCS",  desc: "Physical addressing (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
+              { id: 1, name: "Physical",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Binary transmission over medium.", details: ["Voltage, Radio Waves"], ex: "RJ45 Cable." }
+            ],
+            fr: [
+              { id: 7, name: "Application",  pdu: "Données", color: "#e6002e", header: "Données Brutes", desc: "Interface utilisateur. Génération.", details: ["HTTP, SMTP, DNS", "Payload Utilisateur"], ex: "Envoi d'un email." },
+              { id: 6, name: "Présentation", pdu: "Données", color: "#ff6600", header: "Formatage",   desc: "Traduction, Chiffrement et Compression.", details: ["SSL/TLS, JPEG, ASCII", "Encodage binaire"], ex: "Chiffrement HTTPS." },
+              { id: 5, name: "Session",      pdu: "Données", color: "#ffaa00", header: "ID Session", desc: "Gestion du dialogue entre applis.", details: ["Sync Tokens, RPC"], ex: "Session de login." },
+              { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "Ports TCP/UDP", desc: "Segmentation et fiabilité.", details: ["Port Src/Dst, Seq Num"], ex: "Transport fiable." },
+              { id: 3, name: "Réseau",       pdu: "Paquet",  color: "#00cc66", header: "IP Src/Dst", desc: "Routage logique (Internet).", details: ["IP v4/v6, TTL"], ex: "Routage IP." },
+              { id: 2, name: "Liaison",      pdu: "Trame",   color: "#8800ff", header: "MAC + FCS",  desc: "Adressage physique (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
+              { id: 1, name: "Physique",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Transmission binaire sur média.", details: ["Voltage, Ondes Radio"], ex: "Câble RJ45." }
+            ]
+        };
+
+        // --- GLOBAL VARIABLES ---
+        let currentLang = 'en';
+        let currentStep = 0;
+        let mode = 'encap';
+        let theme = 'cyberpunk';
+        let isAnimating = false;
+        let isExploded = false;
+        let autoplayTimer = null;
+        let speedMult = 1;
+
+        // Avalanche Option B
+        let avalancheEnabled = false;
+        let avalanchePackets = [];
+        let clientNode = null;
+        let serverNode = null;
+        const clientPos = new THREE.Vector3(-7, -2, -6);
+        const serverPos = new THREE.Vector3(7, -2, -6);
+        const midPos    = new THREE.Vector3(0, -0.5, 0); // passe près de la pile
+
+        // 3D Variables
+        let scene, camera, renderer, composer, controls;
+        let packetGroup, particles, layerBoxes = [];
+        let floorPlane, floorGrid;
+        let lights = {};
+        let clock;
+
+        // UI Refs
+        const ui = {
+            title: document.getElementById('app-title'),
+            subtitle: document.getElementById('app-subtitle'),
+            lblMode: document.getElementById('lbl-mode'),
+            modeLabel: document.getElementById('mode-toggle'),
+            
+            lblPdu: document.getElementById('lbl-pdu'),
+            lblHeader: document.getElementById('lbl-header'),
+            lblFunction: document.getElementById('lbl-function'),
+            lblDetails: document.getElementById('lbl-details'),
+            lblExample: document.getElementById('lbl-example'),
+            lblStack: document.getElementById('lbl-stack'),
+            
+            layerTitle: document.getElementById('current-layer-title'),
+            pdu: document.getElementById('pdu-display'),
+            header: document.getElementById('header-display'),
+            desc: document.getElementById('desc-display'),
+            details: document.getElementById('header-details'),
+            ex: document.getElementById('examples-details'),
+            list: document.getElementById('layer-list'),
+            bar: document.getElementById('progress-bar'),
+            step: document.getElementById('step-counter'),
+            
+            btnMain: document.getElementById('action-btn'),
+            btnDecap: document.getElementById('decap-btn'),
+            btnReset: document.getElementById('reset-btn'),
+            btnBack: document.getElementById('prev-step-btn'),
+            btnNext: document.getElementById('next-step-btn'),
+            btnAuto: document.getElementById('autoplay-btn'),
+            btnExplode: document.getElementById('explode-btn'),
+            
+            msg: document.getElementById('message-overlay')
+        };
+
+        // --- LANGUAGE HANDLING ---
+        setLanguage = function(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+            
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+
+            ui.title.innerHTML = t.title;
+            ui.subtitle.innerText = t.subtitle;
+            ui.lblMode.innerText = t.lblMode;
+            ui.lblPdu.innerText = t.lblPdu;
+            ui.lblHeader.innerText = t.lblHeader;
+            ui.lblFunction.innerText = t.lblFunction;
+            ui.lblDetails.innerText = t.lblDetails;
+            ui.lblExample.innerText = t.lblExample;
+            ui.lblStack.innerText = t.lblStack;
+            
+            ui.btnBack.innerText = t.btnBack;
+            ui.btnNext.innerText = t.btnNext;
+            
+            if(!autoplayTimer) ui.btnAuto.innerText = t.btnAuto;
+            else ui.btnAuto.innerText = t.btnStop;
+            
+            ui.btnExplode.innerText = isExploded ? t.btnExplodeOn : t.btnExplodeOff;
+            ui.btnReset.innerText = t.btnReset;
+            ui.btnDecap.innerText = t.btnDecapMode;
+            
+            ui.modeLabel.innerText = mode === 'encap' ? t.modeEncap : t.modeDecap;
+
+            document.getElementById('compare-title').innerText = t.compareTitle;
+            document.getElementById('compare-role').innerText = t.compareRole;
+            document.getElementById('compare-transport').innerText = t.compareTransport;
+            document.getElementById('compare-internet').innerText = t.compareInternet;
+            document.getElementById('compare-net-access').innerText = t.compareNetAccess;
+
+            updateUI();
+        };
+
+        // --- INITIALIZATION ---
+        function init() {
+            initMatrixRain();
+            clock = new THREE.Clock();
+
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.set(6, 5, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.physicallyCorrectLights = true; 
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            container.appendChild(renderer.domElement);
+
+            const renderPass = new THREE.RenderPass(scene, camera);
+            const bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                1.5, 0.4, 0.85
+            );
+            bloomPass.threshold = 0.15;
+            bloomPass.strength = 0.4;
+            bloomPass.radius = 0.4;
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderPass);
+            composer.addPass(bloomPass);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.8;
+
+            packetGroup = new THREE.Group();
+            scene.add(packetGroup);
+
+            const planeGeo = new THREE.PlaneGeometry(200, 200);
+            const planeMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffffff, roughness: 0.8, metalness: 0.0
+            });
+            floorPlane = new THREE.Mesh(planeGeo, planeMat);
+            floorPlane.rotation.x = -Math.PI / 2;
+            floorPlane.position.y = -4;
+            floorPlane.receiveShadow = true;
+            floorPlane.visible = false; 
+            scene.add(floorPlane);
+
+            floorGrid = new THREE.GridHelper(60, 60, 0x444444, 0x222222);
+            floorGrid.position.y = -3.99;
+            floorGrid.material.transparent = true;
+            floorGrid.material.opacity = 0.15;
+            scene.add(floorGrid);
+
+            createParticles();
+            setTheme('cyberpunk');
+            resetGame('encap');
+            setLanguage('en');
+            animate();
+            
+            window.addEventListener('resize', onResize);
+            bindUIEvents();
+        }
+
+        function bindUIEvents() {
+            if(ui.btnMain) ui.btnMain.onclick = nextStep;
+            if(ui.btnReset) ui.btnReset.onclick = () => resetGame(mode);
+            if(ui.modeLabel) ui.modeLabel.onclick = () => resetGame(mode === 'encap' ? 'decap' : 'encap');
+            if(ui.btnDecap) ui.btnDecap.onclick = () => resetGame('decap');
+
+            document.getElementById('prev-step-btn').onclick = prevStep;
+            document.getElementById('next-step-btn').onclick = nextStep;
+            document.getElementById('autoplay-btn').onclick = toggleAutoplay;
+            document.getElementById('speed-btn').onclick = toggleSpeed;
+            document.getElementById('explode-btn').onclick = toggleExplode;
+            document.getElementById('avalanche-btn').onclick = toggleAvalanche;
+            
+            document.getElementById('compare-btn').onclick = () => document.getElementById('compare-overlay').style.display = 'flex';
+            document.getElementById('compare-close').onclick = () => document.getElementById('compare-overlay').style.display = 'none';
+            
+            document.querySelectorAll('.btn-theme').forEach(btn => {
+                btn.onclick = () => setTheme(btn.dataset.theme);
+            });
+        }
+
+        // --- LIGHTING ENGINE ---
+        function updateLights() {
+            Object.values(lights).forEach(l => scene.remove(l));
+            lights = {};
+
+            if(theme === 'mirror') {
+                const ambient = new THREE.AmbientLight(0xffffff, 1.5);
+                lights.ambient = ambient;
+                
+                const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+                dirLight.position.set(5, 15, 8);
+                dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
+                dirLight.shadow.bias = -0.0001;
+                lights.main = dirLight;
+
+                const backLight = new THREE.DirectionalLight(0xddeeff, 2);
+                backLight.position.set(-5, 5, -10);
+                lights.back = backLight;
+
+            } else {
+                const ambient = new THREE.AmbientLight(0xffffff, 1.0);
+                lights.ambient = ambient;
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 4.0);
+                dirLight.position.set(5, 10, 7);
+                dirLight.castShadow = true;
+                lights.main = dirLight;
+
+                const pointLight = new THREE.PointLight(theme === 'matrix' ? 0x00ff00 : 0x00f3ff, 5, 20);
+                pointLight.position.set(-5, 2, 5);
+                lights.point = pointLight;
+            }
+
+            Object.values(lights).forEach(l => scene.add(l));
+        }
+
+        // --- THEMES ---
+        function setTheme(newTheme) {
+            theme = newTheme;
+            document.body.className = `theme-${theme}`;
+            document.querySelectorAll('.btn-theme').forEach(b => {
+                b.classList.toggle('active', b.dataset.theme === theme);
+            });
+
+            const matBg = document.getElementById('matrix-bg');
+            if(matBg) matBg.style.opacity = theme === 'matrix' ? 0.3 : 0;
+
+            const bgCol = getComputedStyle(document.body).getPropertyValue('--bg-color').trim();
+            scene.background = new THREE.Color(bgCol);
+            
+            if(theme === 'mirror') {
+                scene.fog = new THREE.Fog(bgCol, 15, 40);
+                floorPlane.visible = true;
+                floorGrid.visible = true;
+                floorGrid.material.color.setHex(0xd1d5db);
+                floorGrid.material.opacity = 0.5;
+                composer.passes[1].strength = 0; 
+            } else {
+                scene.fog = new THREE.FogExp2(new THREE.Color(bgCol), 0.02);
+                floorPlane.visible = false;
+                floorGrid.visible = true;
+                floorGrid.material.color.setHex(theme === 'matrix' ? 0x00ff00 : 0x444444);
+                floorGrid.material.opacity = 0.15;
+                composer.passes[1].strength = 0.4;
+            }
+
+            updateLights();
+            rebuildSceneMaterials();
+
+            // Recolor corridor nodes + packets
+            const packetColor = (theme === 'matrix') ? 0x00ff00 : 0x00f0ff;
+            if (clientNode) {
+                clientNode.material.color.setHex(packetColor);
+                if (clientNode.material.emissive) clientNode.material.emissive.setHex(packetColor);
+            }
+            if (serverNode) {
+                serverNode.material.color.setHex(packetColor);
+                if (serverNode.material.emissive) serverNode.material.emissive.setHex(packetColor);
+            }
+            avalanchePackets.forEach(p => {
+                p.mesh.material.color.setHex(packetColor);
+                if (p.mesh.material.emissive) p.mesh.material.emissive.setHex(packetColor);
+            });
+
+            updateUI(); 
+        }
+
+        function rebuildSceneMaterials() {
+            const layers = osiData[currentLang] || osiData['en'];
+            layerBoxes.forEach((mesh) => {
+                const layerId = mesh.userData.id;
+                const layerData = layers.find(l => l.id === layerId);
+                
+                if(layerId === 7) {
+                    if(theme === 'mirror') {
+                        mesh.material = new THREE.MeshPhysicalMaterial({ 
+                            color: 0xd9002b, emissive: 0x550000, roughness: 0.1, metalness: 0.1,
+                            clearcoat: 1.0, clearcoatRoughness: 0.1
+                        });
+                        if(mesh.children[0]) mesh.children[0].visible = false;
+                    } else if (theme === 'matrix') {
+                        mesh.material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+                        if(mesh.children[0]) { mesh.children[0].visible = true; mesh.children[0].material.color.setHex(0x00ff00); }
+                    } else {
+                        mesh.material = new THREE.MeshPhysicalMaterial({ 
+                            color: 0xe6002e, 
+                            emissive: 0xe6002e, 
+                            emissiveIntensity: 0.5, 
+                            roughness: 0.2, 
+                            metalness: 0.8,
+                            transmission: 0.1
+                        });
+                        if(mesh.children[0]) { mesh.children[0].visible = true; mesh.children[0].material.color.setHex(0xffaaaa); }
+                    }
+                } else if (layerData) {
+                    let displayColor = layerData.color;
+                    if(theme === 'mirror' && layerId === 1) displayColor = "#1a1a1a"; 
+                    mesh.material = getThemeMaterial(displayColor);
+                    
+                    const edge = mesh.children.find(c => c.type === 'LineSegments' || c.type === 'Line');
+                    if(edge) {
+                        if(theme === 'mirror') {
+                            edge.visible = true;
+                            edge.material.color.setHex(parseInt(displayColor.replace('#','0x')));
+                            edge.material.opacity = 0.8;
+                        } else if (theme === 'matrix') {
+                            edge.visible = true;
+                            edge.material.color.setHex(0x00ff00);
+                            edge.material.opacity = 0.3;
+                        } else {
+                            edge.visible = true;
+                            edge.material.color.setHex(parseInt(layerData.color.replace('#','0x')));
+                            edge.material.opacity = 0.8;
+                        }
+                    }
+                }
+            });
+        }
+
+        function getThemeMaterial(colorHex) {
+            if (theme === 'mirror') {
+                return new THREE.MeshPhysicalMaterial({
+                    color: colorHex, transmission: 0.5, opacity: 1, metalness: 0, roughness: 0.1,
+                    ior: 1.5, thickness: 0.5, side: THREE.DoubleSide, transparent: true
+                });
+            } else if (theme === 'matrix') {
+                return new THREE.MeshBasicMaterial({
+                    color: 0x003300, wireframe: true, transparent: true, opacity: 0.2, side: THREE.DoubleSide
+                });
+            } else {
+                return new THREE.MeshPhysicalMaterial({
+                    color: colorHex, transmission: 0.6, opacity: 0.4, metalness: 0.5, roughness: 0.2,
+                    ior: 1.2, transparent: true, side: THREE.DoubleSide,
+                    emissive: colorHex, emissiveIntensity: 0.2, depthWrite: false
+                });
+            }
+        }
+
+        // --- 3D OBJECT LOGIC ---
+        function spawnCore() {
+            const geo = new THREE.OctahedronGeometry(0.6, 0); 
+            const mat = new THREE.MeshStandardMaterial({ color: 0xffffff }); 
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            const wire = new THREE.LineSegments(
+                new THREE.EdgesGeometry(geo),
+                new THREE.LineBasicMaterial({ color: 0xff0055 })
+            );
+            mesh.add(wire);
+            mesh.userData = { id: 7 };
+            packetGroup.add(mesh);
+            layerBoxes.push(mesh);
+            rebuildSceneMaterials();
+        }
+
+        function addLayer(idx, instant=false) {
+            const layers = osiData[currentLang] || osiData['en'];
+            const layer = layers.find(l => l.id === idx);
+            if (!layer) return;
+
+            const currentSize = 0.8 + (layerBoxes.length * 0.55);
+            const geo = new THREE.BoxGeometry(currentSize, currentSize, currentSize);
+            const mat = getThemeMaterial(layer.color);
+            const box = new THREE.Mesh(geo, mat);
+            box.castShadow = true;
+            box.receiveShadow = true;
+
+            const edges = new THREE.LineSegments(
+                new THREE.EdgesGeometry(geo),
+                new THREE.LineBasicMaterial({ color: layer.color, transparent: true })
+            );
+            box.add(edges);
+            box.userData = { id: layer.id };
+            packetGroup.add(box);
+            layerBoxes.push(box);
+            rebuildSceneMaterials();
+
+            if(!instant) {
+                box.scale.set(0.01, 0.01, 0.01);
+                isAnimating = true;
+                let p = 0;
+                function grow() {
+                    p += 0.05 * speedMult;
+                    const s = Math.min(p, 1);
+                    const scale = s === 1 ? 1 : 1 - Math.pow(2, -10 * s);
+                    box.scale.setScalar(scale);
+                    if(p < 1) requestAnimationFrame(grow);
+                    else { isAnimating = false; updateExplode(); }
+                }
+                grow();
+            }
+        }
+
+        function removeLayer() {
+            const box = layerBoxes.pop();
+            if(!box) return;
+            isAnimating = true;
+            let p = 0;
+            function shrink() {
+                p += 0.05 * speedMult;
+                const s = 1 - p;
+                box.scale.setScalar(Math.max(0.01, s));
+                if(p < 1) requestAnimationFrame(shrink);
+                else {
+                    packetGroup.remove(box);
+                    box.geometry.dispose();
+                    isAnimating = false;
+                    updateExplode();
+                }
+            }
+            shrink();
+        }
+
+        // --- GAMEPLAY LOGIC ---
+        function resetGame(newMode) {
+            mode = newMode;
+            isAnimating = false;
+            if(autoplayTimer) toggleAutoplay();
+
+            while(packetGroup.children.length > 0) packetGroup.remove(packetGroup.children[0]);
+            layerBoxes = [];
+            packetGroup.position.set(0,0,0);
+            packetGroup.rotation.set(0,0,0);
+            packetGroup.scale.set(1,1,1);
+            packetGroup.visible = true;
+
+            const t = translations[currentLang];
+            ui.modeLabel.innerText = mode === 'encap' ? t.modeEncap : t.modeDecap;
+            
+            ui.msg.style.opacity = 0;
+            ui.btnDecap.style.display = 'none';
+            ui.btnReset.style.display = 'none';
+            ui.btnMain.style.display = 'block';
+            ui.btnMain.disabled = false;
+
+            if(mode === 'encap') {
+                currentStep = 0;
+                spawnCore();
+            } else {
+                currentStep = 6;
+                spawnCore();
+                for(let i=6; i>=1; i--) {
+                    addLayer(i, true);
+                }
+            }
+            updateUI();
+        }
+
+        function nextStep() {
+            if(isAnimating) return;
+
+            if(mode === 'encap') {
+                if(currentStep < 6) {
+                    currentStep++; 
+                    const layerIdToAdd = 7 - currentStep; // 6..1
+                    addLayer(layerIdToAdd);
+                    updateUI();
+                } else {
+                    sendAnimation();
+                }
+            } else {
+                if(currentStep > 0) {
+                    removeLayer();
+                    currentStep--;
+                    updateUI();
+                } else {
+                    finishDecap();
+                }
+            }
+        }
+
+        function prevStep() {
+            if(isAnimating) return;
+            if(mode === 'encap') {
+                if(currentStep > 0) {
+                    removeLayer();
+                    currentStep--;
+                    updateUI();
+                }
+            } else {
+                if(currentStep < 6) {
+                    currentStep++;
+                    const layerIdToAdd = 7 - currentStep;
+                    addLayer(layerIdToAdd);
+                    updateUI();
+                }
+            }
+        }
+
+        function sendAnimation() {
+            isAnimating = true;
+            const t = translations[currentLang];
+            ui.msg.innerText = t.msgSending;
+            ui.msg.style.opacity = 1;
+            let speed = 0;
+            function fly() {
+                speed += 0.5 * speedMult;
+                packetGroup.position.z -= speed;
+                packetGroup.rotation.z += 0.1;
+                if(theme === 'mirror') packetGroup.scale.z += 0.1;
+
+                if(packetGroup.position.z > -100) requestAnimationFrame(fly);
+                else {
+                    ui.msg.innerText = t.msgSent;
+                    packetGroup.visible = false;
+                    ui.btnMain.style.display = 'none';
+                    ui.btnDecap.style.display = 'block';
+                    ui.btnReset.style.display = 'block';
+                    if(autoplayTimer) toggleAutoplay();
+                }
+            }
+            fly();
+        }
+
+        function finishDecap() {
+            const t = translations[currentLang];
+            ui.msg.innerText = t.msgReceived;
+            ui.msg.style.opacity = 1;
+            ui.btnMain.disabled = true;
+            ui.btnReset.style.display = 'block';
+            if(autoplayTimer) toggleAutoplay();
+        }
+
+        function updateUI() {
+            const t = translations[currentLang];
+            const layers = osiData[currentLang] || osiData['en'];
+            
+            const layer = layers[currentStep];
+            const nextLayer = layers[currentStep + 1]; 
+            
+            let displayColor = layer.color;
+            if(theme === 'mirror' && layer.id === 1) displayColor = "#334155";
+
+            const layerName = currentLang === 'fr' && layer.id === 7 ? "APPLICATION" : layer.name.toUpperCase();
+
+            ui.layerTitle.innerText = `${t.layer || "LAYER"} ${layer.id}: ${layerName}`;
+            ui.layerTitle.style.color = displayColor;
+            ui.step.innerText = (mode === 'encap' ? (currentStep + 1) : (7 - currentStep)) + " / 7";
+            ui.pdu.innerText = layer.pdu;
+            ui.pdu.style.color = displayColor;
+            ui.header.innerText = layer.header;
+            ui.desc.innerText = layer.desc;
+            ui.details.innerHTML = layer.details.map(d => `> ${d}`).join('<br>');
+            ui.ex.innerHTML = `"${layer.ex}"`;
+
+            if(mode === 'encap') {
+                if(currentStep < 6 && nextLayer) ui.btnMain.innerText = `${t.btnAdd} ${nextLayer.name.toUpperCase()}`;
+                else ui.btnMain.innerText = t.btnTransmit;
+            } else {
+                if(currentStep > 0) ui.btnMain.innerText = `${t.btnRemove} ${layer.name.toUpperCase()}`;
+                else ui.btnMain.innerText = t.btnAccess;
+            }
+
+            ui.list.innerHTML = '';
+            layers.forEach((l, idx) => {
+                const li = document.createElement('li');
+                li.className = 'layer-item';
+                
+                let itemColor = l.color;
+                if(theme === 'mirror' && l.id === 1) itemColor = "#334155";
+                li.style.color = itemColor; 
+                
+                li.innerHTML = `<span style="font-weight:900;">0${l.id}</span> ${l.name.toUpperCase()}`;
+                
+                if(l.id === layer.id) li.classList.add('active');
+                
+                let existsInStack = false;
+                if (mode === 'encap') existsInStack = (idx <= currentStep);
+                else existsInStack = (idx >= currentStep); 
+
+                li.style.opacity = existsInStack ? 1 : 0.3;
+                ui.list.appendChild(li);
+            });
+
+            const pct = mode === 'encap' ? ((currentStep/6)*100) : ((6-currentStep)/6)*100;
+            ui.bar.style.width = `${pct}%`;
+            ui.bar.style.backgroundColor = displayColor;
+
+            updateExplode();
+        }
+
+        function updateExplode() {
+            if(!isExploded) {
+                layerBoxes.forEach(b => b.position.set(0,0,0));
+                return;
+            }
+            layerBoxes.forEach((b, i) => { b.position.y = (i * 0.6); });
+        }
+
+        function toggleExplode() {
+            isExploded = !isExploded;
+            const t = translations[currentLang];
+            document.getElementById('explode-btn').innerText = isExploded ? t.btnExplodeOn : t.btnExplodeOff;
+            updateExplode();
+        }
+
+        function toggleAutoplay() {
+            const btn = document.getElementById('autoplay-btn');
+            const t = translations[currentLang];
+            if(autoplayTimer) {
+                clearInterval(autoplayTimer);
+                autoplayTimer = null;
+                btn.innerText = t.btnAuto;
+                btn.classList.remove('border-green-500');
+            } else {
+                btn.innerText = t.btnStop;
+                btn.classList.add('border-green-500');
+                autoplayTimer = setInterval(() => {
+                    if(!isAnimating) nextStep();
+                }, 2000 / speedMult);
+            }
+        }
+
+        function toggleSpeed() {
+            speedMult = speedMult === 1 ? 2 : (speedMult === 2 ? 0.5 : 1);
+            document.getElementById('speed-btn').innerText = `x${speedMult}`;
+            if(autoplayTimer) { toggleAutoplay(); toggleAutoplay(); }
+        }
+
+        // --- AVALANCHE OPTION B: Corridor Client <-> Server ---
+        function createEndpointNode(position, labelText) {
+            const radius = 0.45;
+            const color = (theme === 'matrix') ? 0x00ff00 : 0x00f0ff;
+            const geo = new THREE.SphereGeometry(radius, 24, 24);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color,
+                emissive: color,
+                emissiveIntensity: 0.7,
+                metalness: 0.2,
+                roughness: 0.2,
+                transmission: 0.3,
+                transparent: true,
+                opacity: 0.95
+            });
+            const node = new THREE.Mesh(geo, mat);
+            node.position.copy(position);
+            node.castShadow = true;
+
+            const edge = new THREE.LineSegments(
+                new THREE.EdgesGeometry(geo),
+                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })
+            );
+            node.add(edge);
+
+            // petit "socle" en dessous
+            const baseGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 24);
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.1, roughness: 0.8 });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.set(0, -radius - 0.04, 0);
+            base.receiveShadow = true;
+            node.add(base);
+
+            scene.add(node);
+            return node;
+        }
+
+        function spawnAvalanchePacket() {
+            const size = 0.18;
+            const color = (theme === 'matrix') ? 0x00ff00 : 0x00f0ff;
+            const geo = new THREE.BoxGeometry(size, size, size);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color,
+                emissive: color,
+                emissiveIntensity: 0.8,
+                roughness: 0.4,
+                metalness: 0.2,
+                transparent: true,
+                opacity: 0.9
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = false;
+
+            const edge = new THREE.LineSegments(
+                new THREE.EdgesGeometry(geo),
+                new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+            );
+            mesh.add(edge);
+
+            // paramètre t le long de la courbe 0→1
+            const packet = {
+                mesh,
+                t: Math.random(),
+                dir: Math.random() > 0.5 ? 1 : -1
+            };
+
+            scene.add(mesh);
+            avalanchePackets.push(packet);
+        }
+
+        function toggleAvalanche() {
+            avalancheEnabled = !avalancheEnabled;
+            const btn = document.getElementById('avalanche-btn');
+            btn.innerText = avalancheEnabled ? 'AVALANCHE ON' : 'AVALANCHE OFF';
+
+            if (avalancheEnabled) {
+                // Créer les nœuds client/serveur si pas encore faits
+                if (!clientNode) clientNode = createEndpointNode(clientPos, 'CLIENT');
+                if (!serverNode) serverNode = createEndpointNode(serverPos, 'SERVER');
+
+                if (avalanchePackets.length === 0) {
+                    for (let i = 0; i < 60; i++) spawnAvalanchePacket();
+                }
+            } else {
+                // supprimer les paquets
+                avalanchePackets.forEach(p => {
+                    scene.remove(p.mesh);
+                    p.mesh.geometry.dispose();
+                    if (p.mesh.material) p.mesh.material.dispose();
+                });
+                avalanchePackets = [];
+
+                // garder les nodes ? on les enlève pour être propre
+                if (clientNode) {
+                    scene.remove(clientNode);
+                    clientNode.geometry.dispose();
+                    clientNode = null;
+                }
+                if (serverNode) {
+                    scene.remove(serverNode);
+                    serverNode.geometry.dispose();
+                    serverNode = null;
+                }
+            }
+        }
+
+        function getBezierPoint(start, mid, end, t) {
+            // Quadratic Bezier: B(t) = (1-t)^2*start + 2(1-t)t*mid + t^2*end
+            const u = 1 - t;
+            const p = new THREE.Vector3();
+            p.copy(start).multiplyScalar(u * u);
+            p.add(mid.clone().multiplyScalar(2 * u * t));
+            p.add(end.clone().multiplyScalar(t * t));
+            return p;
+        }
+
+        function updateAvalanche(dt) {
+            if (!avalancheEnabled) return;
+            const baseSpeed = 0.7 * speedMult; // en t / seconde
+
+            avalanchePackets.forEach(p => {
+                p.t += baseSpeed * dt;
+                if (p.t > 1) p.t -= 1;
+
+                const tEff = p.dir > 0 ? p.t : 1 - p.t;
+                const pos = getBezierPoint(clientPos, midPos, serverPos, tEff);
+                p.mesh.position.copy(pos);
+
+                // légère oscillation pour le style
+                p.mesh.position.y += Math.sin((p.t + pos.x) * 10) * 0.05;
+                p.mesh.rotation.x += 3 * dt;
+                p.mesh.rotation.y += 4 * dt;
+            });
+
+            // petite pulsation sur les nœuds
+            const time = performance.now() * 0.001;
+            if (clientNode) clientNode.scale.setScalar(1 + Math.sin(time * 3) * 0.05);
+            if (serverNode) serverNode.scale.setScalar(1 + Math.cos(time * 3) * 0.05);
+        }
+
+        function createParticles() {
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(2000 * 3);
+            for(let i=0; i<6000; i++) pos[i] = (Math.random()-0.5)*40;
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({ size: 0.1, color: 0x00aaff, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
+            particles = new THREE.Points(geo, mat);
+            scene.add(particles);
+        }
+
+        // --- MATRIX RAIN CANVAS ---
+        function initMatrixRain() {
+            const canvas = document.getElementById('matrix-bg');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const setSize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            setSize();
+            
+            const letters = '01XYZAﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ1234567890';
+            const fontSize = 16;
+            let columns = canvas.width / fontSize;
+            let drops = [];
+            
+            const resetDrops = () => {
+                columns = canvas.width / fontSize;
+                drops = Array(Math.floor(columns)).fill(1);
+            };
+            resetDrops();
+
+            function drawMatrix() {
+                if(theme !== 'matrix') {
+                    ctx.clearRect(0,0,canvas.width, canvas.height);
+                    return;
+                }
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#0F0';
+                ctx.font = fontSize + 'px monospace';
+                for(let i=0; i<drops.length; i++) {
+                    const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+            }
+            setInterval(drawMatrix, 33);
+            window.addEventListener('resize', resetDrops);
+        }
+
+        function onResize() {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            const matCanvas = document.getElementById('matrix-bg');
+            if(matCanvas) {
+                matCanvas.width = window.innerWidth;
+                matCanvas.height = window.innerHeight;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+
+            controls.update();
+            const time = Date.now() * 0.001;
+            
+            if(!isAnimating && packetGroup.visible) {
+                if(!isExploded) {
+                    packetGroup.position.y = Math.sin(time * 0.5) * 0.2;
+                    if(theme === 'mirror') {
+                        if(layerBoxes.length > 0) {
+                            layerBoxes.forEach((b, i) => {
+                                b.rotation.z = Math.sin(time * 0.5 + i) * 0.02;
+                            });
+                        }
+                    } else {
+                        packetGroup.rotation.y = Math.sin(time * 0.1) * 0.1;
+                    }
+                } else {
+                    packetGroup.position.y = 0;
+                }
+            }
+
+            updateAvalanche(dt);
+            composer.render();
+        }
+
+        init();
+    });
+  </script>
+</body>
+</html>
