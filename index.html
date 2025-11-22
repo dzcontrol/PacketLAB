@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PacketLab · V21 GEM (Master Fixed 3)</title>
+  <title>PacketLab · V1 (Master Fixed 4)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -198,6 +198,7 @@
             padding: 10px; gap: 5px; flex-direction: column; align-items: flex-start;
             border-bottom: 1px solid var(--panel-border);
             background: var(--panel-bg);
+            position: absolute; top: 0; left: 0; z-index: 30;
         }
         h1 { font-size: 18px !important; }
         #app-subtitle { display: none; }
@@ -212,6 +213,7 @@
             max-width: 350px;
             margin: 0;
             padding: 15px;
+            z-index: 30;
             /* Hide standard nav buttons from this block on mobile */
         }
         .desktop-nav { display: none; } /* Hide buttons inside the card */
@@ -229,6 +231,7 @@
             padding: 0 15px;
             gap: 10px;
             pointer-events: auto;
+            z-index: 40;
         }
         
         #left-stack { display: none !important; }
@@ -272,7 +275,7 @@
     <div class="panel header-container shadow-lg">
       <div class="w-full flex justify-between items-center md:block md:w-auto">
           <div>
-              <h1 id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V21 GEM</span></h1>
+              <h1 id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V1.1 GEM</span></h1>
               <div id="app-subtitle" class="tracking-widest" style="color: var(--text-muted);">NETWORK FLOW VISUALIZER</div>
           </div>
           <!-- Mobile Mode toggle moved to header top right -->
@@ -391,10 +394,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         
-        // --- LOCALIZATION DATA (Shortened for mobile where possible) ---
+        // --- LOCALIZATION DATA ---
         const translations = {
             en: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1.1 GEM</span>",
                 subtitle: "NETWORK FLOW VISUALIZER",
                 lblMode: "MODE:",
                 modeEncap: "ENCAPSULATION",
@@ -428,7 +431,7 @@
                 stamp: "APPROVED"
             },
             fr: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1.1 GEM</span>",
                 subtitle: "VISUALISATION RÉSEAU",
                 lblMode: "MODE :",
                 modeEncap: "ENCAPSULATION",
@@ -462,7 +465,7 @@
                 stamp: "VALIDÉ"
             },
             es: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1.1 GEM</span>",
                 subtitle: "VISUALIZADOR DE RED",
                 lblMode: "MODO:",
                 modeEncap: "ENCAPSULACIÓN",
@@ -496,7 +499,7 @@
                 stamp: "APROBADO"
             },
             zh: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1.1 GEM</span>",
                 subtitle: "网络流量可视化",
                 lblMode: "模式:",
                 modeEncap: "封装",
@@ -590,14 +593,14 @@
         
         let matrixTexture = null;
 
-        // UI Refs - CORRECTED AND FULL
+        // UI Refs
         const ui = {
             title: document.getElementById('app-title'),
             subtitle: document.getElementById('app-subtitle'),
             lblModeMobile: document.getElementById('lbl-mode-mobile'),
             lblMode: document.getElementById('lbl-mode'),
             
-            // Static Labels
+            // Labels
             lblPdu: document.getElementById('lbl-pdu'),
             lblHeader: document.getElementById('lbl-header'),
             lblFunction: document.getElementById('lbl-function'),
@@ -631,9 +634,50 @@
             mbPrev: document.getElementById('mb-prev'),
             mbNext: document.getElementById('mb-next'),
             mbAuto: document.getElementById('mb-auto'),
+            mbCompare: document.getElementById('mb-compare'),
             
-            msg: document.getElementById('message-overlay')
+            msg: document.getElementById('message-overlay'),
+            modeLabel: document.getElementById('mode-toggle')
         };
+
+        // --- CAMERA AND LAYOUT ADJUSTMENT LOGIC ---
+        function adjustLayout() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Detect layout mode
+            const isMobile = width < 768;
+            const isTablet = width >= 768 && width < 1024;
+            
+            if (isMobile) {
+                // Mobile: UI at top and bottom.
+                // To center the cube in the "clear" space between header and bottom panel:
+                // We shift the camera target DOWN (negative Y).
+                // This effectively moves the world (and the cube at Y=0) UP on the screen.
+                controls.target.set(0, -2.5, 0);
+                camera.position.z = 15; 
+            } else if (isTablet) {
+                // Tablet: Slight upward shift
+                controls.target.set(0, -1, 0);
+                camera.position.z = 12;
+            } else {
+                // Desktop: UI on sides. Center is (0,0,0)
+                controls.target.set(0, 0, 0);
+                camera.position.z = 10;
+            }
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            composer.setSize(width, height);
+            
+            // Matrix background resize
+            const matCanvas = document.getElementById('matrix-bg');
+            if(matCanvas) {
+                matCanvas.width = width;
+                matCanvas.height = height;
+            }
+        }
 
         // --- LANGUAGE HANDLING ---
         setLanguage = function(lang) {
@@ -652,7 +696,7 @@
             const modeText = mode === 'encap' ? t.modeEncap : t.modeDecap;
             if(ui.lblMode) ui.lblMode.innerText = t.lblMode;
             if(ui.lblModeMobile) ui.lblModeMobile.innerText = modeText;
-            document.getElementById('mode-toggle').innerText = modeText;
+            if(ui.modeLabel) ui.modeLabel.innerText = modeText;
 
             document.getElementById('lbl-pdu').innerText = t.lblPdu;
             document.getElementById('lbl-header').innerText = t.lblHeader;
@@ -664,7 +708,7 @@
             
             const autoText = !autoplayTimer ? t.btnAuto : t.btnStop;
             ui.btnAuto.innerText = autoText;
-            ui.mbAuto.innerText = autoText; // Update mobile auto button
+            if (ui.mbAuto) ui.mbAuto.innerText = autoText;
             
             ui.btnExplode.innerText = isExploded ? t.btnExplodeOn : t.btnExplodeOff;
             ui.btnReset.innerText = t.btnReset;
@@ -690,10 +734,9 @@
             const isMobile = window.innerWidth < 768;
             const camZ = isMobile ? 14 : 10; // Move back on mobile
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.set(6, 5, camZ);
-
+            // Position will be set by adjustLayout
+            
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.physicallyCorrectLights = true; 
             renderer.outputEncoding = THREE.sRGBEncoding;
@@ -744,22 +787,23 @@
             setTheme('cyberpunk');
             resetGame('encap');
             setLanguage('en'); 
+            
+            // Initial Layout Adjustment
+            adjustLayout();
+            
             animate();
             
-            window.addEventListener('resize', onResize);
+            window.addEventListener('resize', adjustLayout); // Use new function
             
             // Event Listeners
-            // REMOVED non-existent mobile buttons listeners
-            document.getElementById('mb-compare').onclick = () => document.getElementById('compare-overlay').style.display = 'flex';
+            // Correct Mobile Listeners
             document.getElementById('mode-toggle').onclick = () => resetGame(mode === 'encap' ? 'decap' : 'encap');
             
-            // Add click to mobile label to switch mode
             const mobileModeLbl = document.getElementById('lbl-mode-mobile');
             if(mobileModeLbl) {
                 mobileModeLbl.onclick = () => resetGame(mode === 'encap' ? 'decap' : 'encap');
             }
             
-            // Common Actions
             const doNext = () => nextStep();
             const doPrev = () => prevStep();
             const doAuto = () => toggleAutoplay();
@@ -768,14 +812,14 @@
             if(ui.btnReset) ui.btnReset.onclick = () => resetGame(mode);
             if(ui.btnDecap) ui.btnDecap.onclick = () => resetGame('decap');
 
-            // Bind both Desktop and Mobile buttons
             ui.btnBack.onclick = doPrev;
             ui.btnNext.onclick = doNext;
             ui.btnAuto.onclick = doAuto;
             
-            ui.mbPrev.onclick = doPrev;
-            ui.mbNext.onclick = doNext;
-            ui.mbAuto.onclick = doAuto;
+            if (ui.mbPrev) ui.mbPrev.onclick = doPrev;
+            if (ui.mbNext) ui.mbNext.onclick = doNext;
+            if (ui.mbAuto) ui.mbAuto.onclick = doAuto;
+            if (ui.mbCompare) ui.mbCompare.onclick = () => document.getElementById('compare-overlay').style.display = 'flex';
 
             document.getElementById('speed-btn').onclick = toggleSpeed;
             document.getElementById('explode-btn').onclick = toggleExplode;
@@ -1029,7 +1073,7 @@
             ctx.fillText(text, 256, 256);
             
             ctx.font = 'bold 40px monospace';
-            ctx.fillText("PACKETLAB V21", 256, 140);
+            ctx.fillText("PACKETLAB V1.1", 256, 140);
             
             const date = new Date().toLocaleDateString();
             ctx.font = 'bold 30px monospace';
@@ -1086,12 +1130,7 @@
             stampMesh = null; 
 
             const t = translations[currentLang];
-            
-            const modeText = mode === 'encap' ? t.modeEncap : t.modeDecap;
-            if(ui.lblMode) ui.lblMode.innerText = t.lblMode;
-            if(ui.lblModeMobile) ui.lblModeMobile.innerText = modeText;
-            document.getElementById('mode-toggle').innerText = modeText;
-
+            ui.modeLabel.innerText = mode === 'encap' ? t.modeEncap : t.modeDecap;
             ui.msg.style.opacity = 0;
             ui.btnDecap.style.display = 'none';
             ui.btnReset.style.display = 'none';
@@ -1257,12 +1296,12 @@
                 btn.innerText = t.btnAuto;
                 btn.classList.remove('border-green-500');
                 // Also update mobile button
-                ui.mbAuto.innerText = t.btnAuto;
+                if (ui.mbAuto) ui.mbAuto.innerText = t.btnAuto;
             } else {
                 btn.innerText = t.btnStop;
                 btn.classList.add('border-green-500');
                 // Also update mobile button
-                ui.mbAuto.innerText = t.btnStop;
+                if (ui.mbAuto) ui.mbAuto.innerText = t.btnStop;
                 autoplayTimer = setInterval(() => {
                     if(!isAnimating) nextStep();
                 }, 2000 / speedMult);
@@ -1326,18 +1365,6 @@
                 if(matrixTexture) matrixTexture.needsUpdate = true;
             }
             setInterval(drawMatrix, 33);
-        }
-
-        function onResize() {
-            camera.aspect = window.innerWidth/window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-            const matCanvas = document.getElementById('matrix-bg');
-            if(matCanvas) {
-                matCanvas.width = window.innerWidth;
-                matCanvas.height = window.innerHeight;
-            }
         }
 
         function animate() {
