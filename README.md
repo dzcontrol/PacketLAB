@@ -43,8 +43,6 @@ This allows learners to follow encapsulation like the preparation of a parcel mo
 
 ## ✨ Features
 
-> Depending on version — adjust if needed.
-
 - 3D animated OSI model  
 - Step-by-step encapsulation and decapsulation  
 - Data shown as a glowing “Data Core” (Ruby/Diamond)  
@@ -62,7 +60,7 @@ This allows learners to follow encapsulation like the preparation of a parcel mo
 
 You can watch the video teaser demonstrating the visual concept:
 
-👉 *(Add your link here: GitHub, Netlify, or YouTube)*
+👉 https://www.linkedin.com/posts/activity-7397797725905264640-upqY?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAAUGNJgBKGXmCJbHqo2PLIUvIr3gLmpk8sI
 
 ---
 
