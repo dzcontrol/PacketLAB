@@ -60,7 +60,7 @@ This allows learners to follow encapsulation like the preparation of a parcel mo
 
 You can watch the video teaser demonstrating the visual concept:
 
-👉 https://www.linkedin.com/posts/activity-7397797725905264640-upqY?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAAUGNJgBKGXmCJbHqo2PLIUvIr3gLmpk8sI
+👉 https://www.linkedin.com/posts/activity-7397797725905264640-upqY?
 
 ---
 
