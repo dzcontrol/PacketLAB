@@ -2,20 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PacketLab · V1 (Universal)</title>
-  <!-- Viewport optimized for mobile (no zoom) -->
+  <title>PacketLab · V21 GEM (Master Fixed 3)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Three.js Core & Addons -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <!-- RectAreaLight for Mirror Mode -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lights/RectAreaLightUniformsLib.js"></script>
-  
-  <!-- Post-Processing -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
@@ -27,7 +20,6 @@
     @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Roboto:wght@300;400;700&display=swap");
     @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap'); 
 
-    /* --- THEME VARIABLES --- */
     :root {
         --bg-color: #050508;
         --text-main: #ffffff;
@@ -42,7 +34,6 @@
         --font-data: "Share Tech Mono", monospace;
         --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.2);
         --ui-scale: 1; 
-        --header-height: 90px;
     }
 
     body.theme-mirror {
@@ -86,76 +77,37 @@
         font-family: var(--font-ui);
         color: var(--text-main);
         transition: background-color 0.5s, color 0.5s;
-        font-size: calc(14px * var(--ui-scale)); /* Slightly smaller base for mobile compatibility */
+        font-size: calc(16px * var(--ui-scale));
     }
 
-    /* --- LAYERS --- */
     #matrix-bg { position: absolute; inset: 0; z-index: 1; opacity: 0; pointer-events: none; background: transparent; transition: opacity 0.5s; }
     #canvas-container { position: absolute; inset: 0; z-index: 2; pointer-events: auto; }
-    
-    /* UI Layer Layout */
-    #ui-layer { 
-        position: absolute; inset: 0; pointer-events: none; 
-        display: flex; flex-direction: column; justify-content: space-between; 
-        padding: 16px; z-index: 20; 
-        overflow: hidden;
-    }
+    #ui-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; z-index: 20; overflow: hidden; }
 
-    /* --- PANELS --- */
     .panel {
         background: var(--panel-bg);
         border: 1px solid var(--panel-border);
         border-left: 4px solid var(--accent-primary);
-        padding: 15px; /* Slightly reduced padding for mobile */
-        pointer-events: auto;
+        padding: 20px; pointer-events: auto;
         backdrop-filter: blur(12px);
         box-shadow: var(--shadow-glow);
         transition: all 0.3s ease;
-        border-radius: 4px; 
-        box-sizing: border-box; 
+        border-radius: 4px; box-sizing: border-box; 
     }
-    
     body.theme-mirror .panel { border-radius: 0px; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent-primary); }
 
-    /* --- HEADER --- */
-    .header-container {
-        /* Flexible height on mobile, fixed on desktop via media query */
-        display: flex;
-        flex-direction: column; /* Stack on mobile */
-        align-items: flex-start;
-        gap: 10px;
-        pointer-events: auto; /* Enable interaction */
-    }
+    .header-container { height: 90px; min-height: 90px; display: flex; align-items: center; overflow: hidden; }
+    h1 { font-size: 24px !important; font-weight: 900; letter-spacing: 1px; color: var(--accent-primary); margin: 0; line-height: 1.1; }
+    #app-subtitle { font-size: 10px !important; line-height: 1.4; margin-top: 4px; }
 
-    h1 { 
-        font-size: clamp(18px, 4vw, 24px) !important; /* Responsive Font Size */
-        font-weight: 900; letter-spacing: 1px; color: var(--accent-primary); 
-        margin: 0; line-height: 1.1; 
-    }
-    #app-subtitle { font-size: 10px !important; line-height: 1.4; margin-top: 2px; display: none; /* Hide subtitle on very small screens */ }
-    @media (min-width: 360px) { #app-subtitle { display: block; } }
-
-    /* --- CONTROLS --- */
-    .controls-container {
-        /* Controls panel at bottom */
-        width: 100%;
-        max-height: 50vh; /* Don't take more than half screen on mobile */
-        overflow-y: auto; /* Scroll if needed */
-        margin-top: auto; /* Push to bottom */
-        display: flex; flex-direction: column;
-    }
-
-    /* --- BUTTONS --- */
     .btn-action {
         background: linear-gradient(90deg, var(--btn-bg-start), var(--btn-bg-end));
         border: 2px solid var(--accent-primary);
-        color: var(--text-main);
-        padding: 0 14px; width: 100%; height: 48px; 
+        color: var(--text-main); padding: 0 14px; width: 100%; height: 48px; 
         display: flex; align-items: center; justify-content: center;
         font-family: var(--font-ui); font-weight: 800; font-size: 1rem;
         text-transform: uppercase; letter-spacing: 1px;
-        cursor: pointer; transition: all 0.2s;
-        margin-top: 10px; position: relative; overflow: hidden; box-sizing: border-box;
+        cursor: pointer; transition: all 0.2s; margin-top: 12px; position: relative; overflow: hidden; box-sizing: border-box;
     }
     body.theme-mirror .btn-action { background: var(--accent-primary); color: white; border: 2px solid transparent; border-radius: 0; box-shadow: 0 4px 6px rgba(255, 0, 51, 0.2); }
     body.theme-mirror .btn-action:hover { background: #b30024; transform: translateY(-1px); }
@@ -164,26 +116,24 @@
 
     .btn-nav {
         background: rgba(0,0,0,0.05); border: 1px solid var(--panel-border);
-        color: var(--text-main); font-size: 0.75rem; font-weight: 700; 
-        cursor: pointer; text-transform: uppercase; flex: 1; transition: all 0.2s;
-        box-sizing: border-box; height: 40px; /* Taller for touch */
+        color: var(--text-main); font-size: 0.75rem; font-weight: 700; cursor: pointer; text-transform: uppercase; flex: 1;
+        transition: all 0.2s; box-sizing: border-box; height: 36px; 
         display: flex; align-items: center; justify-content: center;
     }
     .btn-nav:hover { background: var(--accent-primary); color: var(--bg-color); border-color: var(--accent-primary); }
 
-    .theme-controls { display: flex; height: 28px; align-items: center; gap: 2px; flex-wrap: wrap; }
+    .theme-controls { display: flex; height: 28px; align-items: center; }
     .btn-theme {
         font-size: 10px; width: 55px; height: 26px; border: 1px solid var(--panel-border);
         background: transparent; color: var(--text-muted); cursor: pointer;
-        opacity: 0.8; transition: all 0.2s; box-sizing: border-box;
+        opacity: 0.8; transition: all 0.2s; margin-right: 4px; box-sizing: border-box;
         display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;
     }
-    .btn-theme.active { opacity: 1; color: var(--bg-color); background: var(--accent-primary); border-color: var(--accent-primary); font-weight: bold; }
-    
+    .btn-theme:hover, .btn-theme.active { opacity: 1; color: var(--bg-color); background: var(--accent-primary); border-color: var(--accent-primary); font-weight: bold; }
     .btn-lang {
         font-size: 10px; width: 24px; height: 24px; border: 1px solid var(--panel-border);
         background: transparent; color: var(--text-muted); cursor: pointer;
-        opacity: 0.6; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
+        opacity: 0.6; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; margin-left: 2px;
     }
     .btn-lang.active { opacity: 1; background: var(--accent-primary); color: var(--bg-color); font-weight: bold; }
 
@@ -191,28 +141,25 @@
     .layer-item {
         padding: 0 10px; border-bottom: 1px solid var(--panel-border);
         font-size: 0.85rem; display: flex; justify-content: space-between;
-        opacity: 0.5; transition: all 0.3s; font-family: var(--font-data); font-weight: 600;
-        height: 38px; box-sizing: border-box; align-items: center;
+        opacity: 0.5; transition: all 0.3s; font-family: var(--font-data); font-weight: 600; height: 38px; box-sizing: border-box; align-items: center;
     }
     .layer-item.active { opacity: 1; background: linear-gradient(90deg, rgba(128,128,128,0.1), transparent); font-weight: bold; border-left: 4px solid currentColor; padding-left: 16px; }
     .layer-item.completed { opacity: 1; }
 
     .info-block {
         background: rgba(128,128,128,0.08); border: 1px solid var(--panel-border);
-        padding: 8px; margin-bottom: 8px; font-size: 0.8rem;
+        padding: 10px; margin-bottom: 10px; font-size: 0.85rem;
         color: var(--text-muted); font-family: var(--font-data);
         border-left: 3px solid var(--accent-secondary);
     }
-    .info-label { font-size: 0.7rem; color: var(--accent-primary); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+    .info-label { font-size: 0.7rem; color: var(--accent-primary); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
 
     #message-overlay {
-        position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-        font-size: clamp(2rem, 8vw, 4rem); /* Responsive font size */
-        font-weight: 900; color: var(--accent-primary); text-align: center;
-        text-shadow: 0 0 30px var(--accent-primary);
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        font-size: 3rem; font-weight: 900; color: var(--accent-primary); text-shadow: 0 0 30px var(--accent-primary);
         pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 50;
-        background: rgba(0,0,0,0.9); padding: 20px 40px; border: 3px solid var(--accent-primary);
-        width: 90%; max-width: 600px; box-sizing: border-box;
+        background: rgba(0,0,0,0.9); padding: 40px; border: 3px solid var(--accent-primary);
+        width: 80%; text-align: center;
     }
     body.theme-mirror #message-overlay { background: transparent; border: none; font-family: 'Rajdhani', sans-serif; color: #ff0033; text-shadow: 3px 3px 0px #fff; }
     
@@ -222,57 +169,70 @@
     th, td { border: 1px solid var(--panel-border); padding: 8px; text-align: left; }
     th { color: var(--accent-primary); background: rgba(128,128,128,0.05); }
 
-    /* --- RESPONSIVE MEDIA QUERIES --- */
+    /* --- RESPONSIVE OPTIMIZATIONS --- */
     
-    /* DESKTOP (lg) > 1024px */
-    @media (min-width: 1024px) {
+    /* DESKTOP / TABLET */
+    @media (min-width: 768px) {
         #ui-layer { padding: 20px; }
-        .header-container { flex-direction: row; height: 90px; align-items: center; width: auto; }
-        .controls-container { width: 380px; margin-bottom: 20px; margin-right: 20px; align-self: flex-end; border-radius: 4px; }
-        #left-stack { display: block; } /* Show stack on desktop */
-        .btn-nav { height: 36px; }
+        .header-container { flex-direction: row; width: auto; }
+        
+        /* Sidebar Controls (Standard) */
+        .controls-container { 
+            width: 380px; 
+            align-self: flex-end; 
+            margin-bottom: 20px; 
+            margin-right: 20px; 
+        }
+        .desktop-nav { display: flex; } /* Show integrated nav */
+        #mobile-nav-bar { display: none; } /* Hide mobile bar */
+        #left-stack { display: block; }
     }
 
-    /* TABLET (md) 768px - 1024px */
-    @media (min-width: 768px) and (max-width: 1023px) {
-        .header-container { flex-direction: row; width: 100%; justify-content: space-between; }
-        .controls-container { width: 350px; align-self: flex-end; }
-        #left-stack { display: block; width: 200px; }
-    }
-
-    /* MOBILE (sm) < 768px */
+    /* MOBILE (< 768px) */
     @media (max-width: 767px) {
-        #ui-layer { padding: 10px; }
+        #ui-layer { padding: 0; } /* Full width */
         
-        /* Header compacted */
+        /* Compact Header */
         .header-container { 
-            width: 100%; 
-            height: auto; 
-            min-height: auto; 
-            padding: 10px; 
-            gap: 8px;
-            border-radius: 0 0 10px 10px; /* Rounded bottom */
+            width: 100%; height: auto; min-height: auto; 
+            padding: 10px; gap: 5px; flex-direction: column; align-items: flex-start;
+            border-bottom: 1px solid var(--panel-border);
+            background: var(--panel-bg);
         }
+        h1 { font-size: 18px !important; }
+        #app-subtitle { display: none; }
         
-        /* Hide Left Stack on Mobile to clear view */
-        #left-stack { display: none !important; }
-        
-        /* Controls at bottom, full width */
+        /* Centered Info Block (Floating) */
         .controls-container {
-            width: 100%;
-            align-self: center;
-            border-radius: 12px 12px 0 0;
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 30px; /* Safe area for iOS home bar */
+            position: absolute;
+            bottom: 70px; /* Above nav bar */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 350px;
+            margin: 0;
+            padding: 15px;
+            /* Hide standard nav buttons from this block on mobile */
+        }
+        .desktop-nav { display: none; } /* Hide buttons inside the card */
+
+        /* Mobile Bottom Bar (Navigation Only) */
+        #mobile-nav-bar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 60px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            gap: 10px;
+            pointer-events: auto;
         }
         
-        .btn-theme { width: 45px; font-size: 9px; }
-        
-        /* Adjust Font sizes */
-        h2 { font-size: 1rem; margin-bottom: 5px; }
-        .stat-val { font-size: 1.1rem; }
-        p { font-size: 0.8rem; }
+        #left-stack { display: none !important; }
+        .info-block { display: none; } /* Hide details to keep card small */
     }
   </style>
 </head>
@@ -310,12 +270,18 @@
   <div id="ui-layer">
     <!-- Top Bar -->
     <div class="panel header-container shadow-lg">
-      <div>
-          <h1 class="text-2xl" id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V1 GEM</span></h1>
-          <div id="app-subtitle" class="tracking-widest" style="color: var(--text-muted);">NETWORK FLOW VISUALIZER</div>
+      <div class="w-full flex justify-between items-center md:block md:w-auto">
+          <div>
+              <h1 id="app-title">PacketLab <span style="font-size:0.6em; opacity:0.7;">V21 GEM</span></h1>
+              <div id="app-subtitle" class="tracking-widest" style="color: var(--text-muted);">NETWORK FLOW VISUALIZER</div>
+          </div>
+          <!-- Mobile Mode toggle moved to header top right -->
+          <div class="md:hidden">
+              <span id="lbl-mode-mobile" class="text-[0.6rem] font-bold text-accent-secondary uppercase cursor-pointer">ENCAPSULATION</span>
+          </div>
       </div>
       
-      <div class="flex flex-col gap-1 md:gap-2 md:ml-auto mt-2 md:mt-0">
+      <div class="flex flex-col gap-1 md:gap-2 md:ml-auto w-full md:w-auto">
           <div class="flex justify-between items-center w-full">
              <div class="theme-controls">
                   <button class="btn-theme active" data-theme="cyberpunk">CYBER</button>
@@ -331,7 +297,8 @@
              </div>
           </div>
           
-          <div style="display: flex; align-items: center; margin-top: 2px;">
+          <!-- Desktop Mode Toggle -->
+          <div class="hidden md:flex items-center mt-1">
               <span id="lbl-mode" class="text-[0.65rem] uppercase font-bold mr-2 opacity-70">MODE:</span>
               <button id="mode-toggle" class="text-xs font-bold uppercase hover:underline" style="color: var(--accent-secondary);">ENCAPSULATION</button>
           </div>
@@ -349,17 +316,17 @@
         </div>
     </div>
 
-    <!-- Right Controls (Bottom sheet on mobile) -->
+    <!-- CENTERED INFO BLOCK (Floating on mobile) -->
     <div class="panel controls-container shadow-2xl">
-        <div class="border-b border-gray-700 pb-2 mb-3 flex justify-between items-end" style="border-color: var(--panel-border);">
-            <h2 id="current-layer-title" style="margin:0;">LAYER 7: APPLICATION</h2>
-            <span id="step-counter" class="text-sm font-mono opacity-70">1 / 7</span>
+        <div class="border-b border-gray-700 pb-2 mb-2 flex justify-between items-end" style="border-color: var(--panel-border);">
+            <h2 id="current-layer-title" style="margin:0; font-size: 1rem;">LAYER 7: APPLICATION</h2>
+            <span id="step-counter" class="text-xs font-mono opacity-70">1 / 7</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-3">
+        <div class="grid grid-cols-2 gap-2 mb-2">
             <div>
                 <span id="lbl-pdu" class="info-label">PDU</span>
-                <div id="pdu-display" class="text-lg font-bold" style="color: var(--text-main);">Data</div>
+                <div id="pdu-display" class="text-base font-bold" style="color: var(--text-main);">Data</div>
             </div>
             <div class="text-right">
                 <span id="lbl-header" class="info-label">HEADER</span>
@@ -367,40 +334,55 @@
             </div>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-2">
             <span id="lbl-function" class="info-label">FUNCTION</span>
-            <p id="desc-display" class="text-sm leading-snug" style="color: var(--text-muted);">User interface generation.</p>
+            <p id="desc-display" class="text-xs leading-snug" style="color: var(--text-muted);">User interface generation.</p>
         </div>
 
-        <!-- Details Hidden on very small screens if needed, but keeping for now -->
+        <!-- Details Hidden on mobile to save space -->
         <div class="info-block hidden md:block">
             <span id="lbl-details" class="info-label">DETAILS</span>
             <div id="header-details">HTTP, SMTP...</div>
         </div>
         
-        <div class="info-block">
+        <div class="info-block hidden md:block">
             <span id="lbl-example" class="info-label">EXAMPLE</span>
             <div id="examples-details">Opening a web page.</div>
         </div>
 
+        <!-- MAIN ACTION BUTTON -->
         <button id="action-btn" class="btn-action">ENCAPSULATE (LAYER 6)</button>
 
-        <div class="flex gap-2 mt-3">
-            <button id="prev-step-btn" class="btn-nav">◀</button>
-            <button id="next-step-btn" class="btn-nav">▶</button>
-            <button id="autoplay-btn" class="btn-nav" style="border-color: var(--accent-primary); flex: 2;">▶ AUTO</button>
-        </div>
+        <!-- DESKTOP NAV BUTTONS (Hidden on Mobile) -->
+        <div class="desktop-nav flex-col gap-2 mt-2">
+            <div class="flex gap-2">
+                <button id="prev-step-btn" class="btn-nav">◀</button>
+                <button id="next-step-btn" class="btn-nav">▶</button>
+                <button id="autoplay-btn" class="btn-nav" style="border-color: var(--accent-primary); flex: 2;">▶ AUTO</button>
+            </div>
 
-        <div class="flex gap-1 mt-2">
-            <button id="speed-btn" class="btn-nav" style="font-size: 0.7rem;">1x</button>
-            <button id="explode-btn" class="btn-nav" style="font-size: 0.6rem; flex:2;">EXPLODED</button>
-            <button id="compare-btn" class="btn-nav" style="font-size: 0.6rem;">TCP/IP</button>
+            <div class="flex gap-1 mt-2">
+                <button id="speed-btn" class="btn-nav" style="font-size: 0.7rem;">1x</button>
+                <button id="explode-btn" class="btn-nav" style="font-size: 0.6rem; flex:2;">EXPLODED</button>
+                <button id="compare-btn" class="btn-nav" style="font-size: 0.6rem;">TCP/IP</button>
+            </div>
+            
+            <!-- Hidden Buttons -->
+            <button id="decap-btn" class="btn-action mt-2" style="display:none; background: var(--accent-secondary); border-color: var(--text-main); color: var(--text-main);">DECAPSULATION MODE</button>
+            <button id="reset-btn" class="btn-action mt-2" style="display:none; background: #0f172a; color: #fff; border: 1px solid #333;">RESET</button>
         </div>
-        
-        <!-- Hidden Buttons -->
-        <button id="decap-btn" class="btn-action mt-2" style="display:none; background: var(--accent-secondary); border-color: var(--text-main); color: var(--text-main);">DECAPSULATION MODE</button>
-        <button id="reset-btn" class="btn-action mt-2" style="display:none; background: #0f172a; color: #fff; border: 1px solid #333;">RESET</button>
     </div>
+    
+    <!-- MOBILE BOTTOM NAV BAR (Visible only on Mobile) -->
+    <div id="mobile-nav-bar">
+        <button id="mb-prev" class="btn-nav" style="flex:0 0 50px;">◀</button>
+        <div class="flex-1 flex justify-center gap-2">
+            <button id="mb-auto" class="btn-nav text-[10px]">AUTO</button>
+            <button id="mb-compare" class="btn-nav text-[10px]">TCP/IP</button>
+        </div>
+        <button id="mb-next" class="btn-nav" style="flex:0 0 50px;">▶</button>
+    </div>
+    
   </div>
 
   <script>
@@ -409,25 +391,25 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         
-        // --- LOCALIZATION DATA ---
+        // --- LOCALIZATION DATA (Shortened for mobile where possible) ---
         const translations = {
             en: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
                 subtitle: "NETWORK FLOW VISUALIZER",
                 lblMode: "MODE:",
                 modeEncap: "ENCAPSULATION",
                 modeDecap: "DECAPSULATION",
                 lblPdu: "PDU",
-                lblHeader: "ADDED HEADER",
+                lblHeader: "HEADER",
                 lblFunction: "FUNCTION",
                 lblDetails: "DETAILS",
                 lblExample: "EXAMPLE",
                 lblStack: "STACK",
-                btnEncapStart: "ENCAPSULATE (L6)",
+                btnEncapStart: "ENCAPSULATE",
                 btnTransmit: "TRANSMIT",
                 btnAdd: "ADD",
                 btnRemove: "REMOVE",
-                btnAccess: "ACCESS DATA",
+                btnAccess: "ACCESS",
                 btnAuto: "▶ AUTO",
                 btnStop: "⏹ STOP",
                 btnExplodeOn: "EXP: ON",
@@ -446,7 +428,7 @@
                 stamp: "APPROVED"
             },
             fr: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
                 subtitle: "VISUALISATION RÉSEAU",
                 lblMode: "MODE :",
                 modeEncap: "ENCAPSULATION",
@@ -457,7 +439,7 @@
                 lblDetails: "DÉTAILS",
                 lblExample: "EXEMPLE",
                 lblStack: "PILE",
-                btnEncapStart: "ENCAPSULER (C6)",
+                btnEncapStart: "ENCAPSULER",
                 btnTransmit: "TRANSMETTRE",
                 btnAdd: "AJOUTER",
                 btnRemove: "RETIRER",
@@ -480,7 +462,7 @@
                 stamp: "VALIDÉ"
             },
             es: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
                 subtitle: "VISUALIZADOR DE RED",
                 lblMode: "MODO:",
                 modeEncap: "ENCAPSULACIÓN",
@@ -491,7 +473,7 @@
                 lblDetails: "DETALLES",
                 lblExample: "EJEMPLO",
                 lblStack: "PILA",
-                btnEncapStart: "ENCAPSULAR (C6)",
+                btnEncapStart: "ENCAPSULAR",
                 btnTransmit: "TRANSMITIR",
                 btnAdd: "AÑADIR",
                 btnRemove: "QUITAR",
@@ -514,7 +496,7 @@
                 stamp: "APROBADO"
             },
             zh: {
-                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V1 GEM</span>",
+                title: "PacketLab <span style='font-size:0.6em; opacity:0.7;'>V21 GEM</span>",
                 subtitle: "网络流量可视化",
                 lblMode: "模式:",
                 modeEncap: "封装",
@@ -525,7 +507,7 @@
                 lblDetails: "细节",
                 lblExample: "示例",
                 lblStack: "协议栈",
-                btnEncapStart: "封装 (L6)",
+                btnEncapStart: "封装",
                 btnTransmit: "传输",
                 btnAdd: "添加",
                 btnRemove: "移除",
@@ -549,37 +531,38 @@
             }
         };
 
+        // Same OSI Data
         const osiData = {
             en: [
               { id: 7, name: "Application",  pdu: "Data",    color: "#e6002e", header: "Raw Data", desc: "User interface. Data generation.", details: ["HTTP, SMTP, DNS", "User Payload"], ex: "Sending an email." },
-              { id: 6, name: "Presentation", pdu: "Data",    color: "#ff6600", header: "Format",   desc: "Translation, Encryption, Compression.", details: ["SSL/TLS, JPEG", "Binary Encoding"], ex: "HTTPS Encryption." },
-              { id: 5, name: "Session",      pdu: "Data",    color: "#ffaa00", header: "Session ID", desc: "Dialogue management between apps.", details: ["Sync Tokens, RPC"], ex: "Login session." },
+              { id: 6, name: "Presentation", pdu: "Data",    color: "#ff6600", header: "Format",   desc: "Translation, Encryption and Compression.", details: ["SSL/TLS, JPEG, ASCII", "Binary Encoding"], ex: "HTTPS Encryption." },
+              { id: 5, name: "Session",      pdu: "Data",    color: "#ffaa00", header: "Session ID", desc: "Dialogue management.", details: ["Sync Tokens, RPC"], ex: "Login session." },
               { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "TCP Ports", desc: "Segmentation and reliability.", details: ["Src/Dst Port, Seq"], ex: "Reliable transport." },
-              { id: 3, name: "Network",      pdu: "Packet",  color: "#00cc66", header: "IP Addr", desc: "Logical routing (Internet).", details: ["IP v4/v6, TTL"], ex: "IP Routing." },
-              { id: 2, name: "Data Link",    pdu: "Frame",   color: "#8800ff", header: "MAC Addr",  desc: "Physical addressing (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
-              { id: 1, name: "Physical",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Binary transmission over medium.", details: ["Voltage, Radio"], ex: "RJ45 Cable." }
+              { id: 3, name: "Network",      pdu: "Packet",  color: "#00cc66", header: "IP Addr", desc: "Logical routing.", details: ["IP v4/v6, TTL"], ex: "IP Routing." },
+              { id: 2, name: "Data Link",    pdu: "Frame",   color: "#8800ff", header: "MAC Addr",  desc: "Physical addressing.", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
+              { id: 1, name: "Physical",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Binary transmission.", details: ["Voltage, Radio"], ex: "RJ45 Cable." }
             ],
             fr: [
               { id: 7, name: "Application",  pdu: "Données", color: "#e6002e", header: "Brutes", desc: "Interface utilisateur. Génération.", details: ["HTTP, SMTP, DNS", "Payload"], ex: "Envoi d'un email." },
               { id: 6, name: "Présentation", pdu: "Données", color: "#ff6600", header: "Format",   desc: "Traduction, Chiffrement, Compression.", details: ["SSL/TLS, JPEG", "Binaire"], ex: "Chiffrement HTTPS." },
-              { id: 5, name: "Session",      pdu: "Données", color: "#ffaa00", header: "ID Session", desc: "Gestion dialogue entre applis.", details: ["Sync Tokens, RPC"], ex: "Session login." },
+              { id: 5, name: "Session",      pdu: "Données", color: "#ffaa00", header: "ID Session", desc: "Gestion dialogue.", details: ["Sync Tokens, RPC"], ex: "Session login." },
               { id: 4, name: "Transport",    pdu: "Segment", color: "#0099ff", header: "Ports TCP", desc: "Segmentation et fiabilité.", details: ["Port Src/Dst, Seq"], ex: "Transport fiable." },
-              { id: 3, name: "Réseau",       pdu: "Paquet",  color: "#00cc66", header: "Adr IP", desc: "Routage logique (Internet).", details: ["IP v4/v6, TTL"], ex: "Routage IP." },
-              { id: 2, name: "Liaison",      pdu: "Trame",   color: "#8800ff", header: "Adr MAC",  desc: "Adressage physique (Switch).", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
-              { id: 1, name: "Physique",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Transmission binaire sur média.", details: ["Voltage, Radio"], ex: "Câble RJ45." }
+              { id: 3, name: "Réseau",       pdu: "Paquet",  color: "#00cc66", header: "Adr IP", desc: "Routage logique.", details: ["IP v4/v6, TTL"], ex: "Routage IP." },
+              { id: 2, name: "Liaison",      pdu: "Trame",   color: "#8800ff", header: "Adr MAC",  desc: "Adressage physique.", details: ["MAC Addr, CRC"], ex: "Ethernet / Wifi." },
+              { id: 1, name: "Physique",     pdu: "Bits",    color: "#c0c0c0", header: "Signal",     desc: "Transmission binaire.", details: ["Voltage, Radio"], ex: "Câble RJ45." }
             ],
             es: [
-              { id: 7, name: "Aplicación",   pdu: "Datos",   color: "#e6002e", header: "Brutos", desc: "Interfaz usuario. Generación.", details: ["HTTP, SMTP", "Carga Útil"], ex: "Enviar correo." },
-              { id: 6, name: "Presentación", pdu: "Datos",   color: "#ff6600", header: "Formato",    desc: "Traducción, Cifrado, Compresión.", details: ["SSL/TLS, JPEG", "Binario"], ex: "Cifrado HTTPS." },
+              { id: 7, name: "Aplicación",   pdu: "Datos",   color: "#e6002e", header: "Brutos", desc: "Interfaz usuario.", details: ["HTTP, SMTP", "Carga Útil"], ex: "Enviar correo." },
+              { id: 6, name: "Presentación", pdu: "Datos",   color: "#ff6600", header: "Formato",    desc: "Traducción, Cifrado.", details: ["SSL/TLS, JPEG", "Binario"], ex: "Cifrado HTTPS." },
               { id: 5, name: "Sesión",       pdu: "Datos",   color: "#ffaa00", header: "ID Sesión",  desc: "Gestión del diálogo.", details: ["Tokens, RPC"], ex: "Login." },
               { id: 4, name: "Transporte",   pdu: "Segmento",color: "#0099ff", header: "Puertos",desc: "Segmentación y fiabilidad.", details: ["Puerto, Secuencia"], ex: "Fiabilidad." },
               { id: 3, name: "Red",          pdu: "Paquete", color: "#00cc66", header: "IP Addr", desc: "Enrutamiento lógico.", details: ["IP v4/v6, TTL"], ex: "Ruta IP." },
-              { id: 2, name: "Enlace",       pdu: "Trama",   color: "#8800ff", header: "MAC Addr",  desc: "Dirección física (Switch).", details: ["MAC, CRC"], ex: "Ethernet." },
+              { id: 2, name: "Enlace",       pdu: "Trama",   color: "#8800ff", header: "MAC Addr",  desc: "Dirección física.", details: ["MAC, CRC"], ex: "Ethernet." },
               { id: 1, name: "Física",       pdu: "Bits",    color: "#c0c0c0", header: "Señal",      desc: "Transmisión binaria.", details: ["Voltaje, Radio"], ex: "Cable RJ45." }
             ],
             zh: [
-              { id: 7, name: "应用层",       pdu: "数据",    color: "#e6002e", header: "原始数据",   desc: "用户界面。数据生成。", details: ["HTTP, SMTP", "负载"], ex: "发邮件。" },
-              { id: 6, name: "表示层",       pdu: "数据",    color: "#ff6600", header: "格式",       desc: "翻译、加密、压缩。", details: ["SSL/TLS, JPEG", "二进制"], ex: "HTTPS 加密。" },
+              { id: 7, name: "应用层",       pdu: "数据",    color: "#e6002e", header: "原始数据",   desc: "用户界面。", details: ["HTTP, SMTP", "负载"], ex: "发邮件。" },
+              { id: 6, name: "表示层",       pdu: "数据",    color: "#ff6600", header: "格式",       desc: "翻译、加密。", details: ["SSL/TLS, JPEG", "二进制"], ex: "HTTPS 加密。" },
               { id: 5, name: "会话层",       pdu: "数据",    color: "#ffaa00", header: "会话 ID",    desc: "应用间对话管理。", details: ["令牌, RPC"], ex: "登录。" },
               { id: 4, name: "传输层",       pdu: "段",      color: "#0099ff", header: "端口",desc: "分段和可靠性。", details: ["端口, 序列号"], ex: "可靠传输。" },
               { id: 3, name: "网络层",       pdu: "包",      color: "#00cc66", header: "IP 地址", desc: "逻辑路由。", details: ["IP v4/v6"], ex: "IP 路由。" },
@@ -607,18 +590,22 @@
         
         let matrixTexture = null;
 
-        // UI Refs
+        // UI Refs - CORRECTED AND FULL
         const ui = {
             title: document.getElementById('app-title'),
             subtitle: document.getElementById('app-subtitle'),
+            lblModeMobile: document.getElementById('lbl-mode-mobile'),
             lblMode: document.getElementById('lbl-mode'),
-            modeLabel: document.getElementById('mode-toggle'),
+            
+            // Static Labels
             lblPdu: document.getElementById('lbl-pdu'),
             lblHeader: document.getElementById('lbl-header'),
             lblFunction: document.getElementById('lbl-function'),
             lblDetails: document.getElementById('lbl-details'),
             lblExample: document.getElementById('lbl-example'),
             lblStack: document.getElementById('lbl-stack'),
+            
+            // Dynamic Content Areas
             layerTitle: document.getElementById('current-layer-title'),
             pdu: document.getElementById('pdu-display'),
             header: document.getElementById('header-display'),
@@ -628,13 +615,23 @@
             list: document.getElementById('layer-list'),
             bar: document.getElementById('progress-bar'),
             step: document.getElementById('step-counter'),
+            
+            // Buttons
             btnMain: document.getElementById('action-btn'),
             btnDecap: document.getElementById('decap-btn'),
             btnReset: document.getElementById('reset-btn'),
+            
+            // Desktop Buttons
             btnBack: document.getElementById('prev-step-btn'),
             btnNext: document.getElementById('next-step-btn'),
             btnAuto: document.getElementById('autoplay-btn'),
             btnExplode: document.getElementById('explode-btn'),
+            
+            // Mobile Buttons
+            mbPrev: document.getElementById('mb-prev'),
+            mbNext: document.getElementById('mb-next'),
+            mbAuto: document.getElementById('mb-auto'),
+            
             msg: document.getElementById('message-overlay')
         };
 
@@ -646,31 +643,33 @@
             document.querySelectorAll('.btn-lang').forEach(b => b.classList.remove('active'));
             document.getElementById('lang-' + lang).classList.add('active');
             
-            if(lang === 'zh') {
-                document.body.classList.add('lang-zh');
-            } else {
-                document.body.classList.remove('lang-zh');
-            }
+            if(lang === 'zh') document.body.classList.add('lang-zh');
+            else document.body.classList.remove('lang-zh');
 
             ui.title.innerHTML = t.title;
             ui.subtitle.innerText = t.subtitle;
-            ui.lblMode.innerText = t.lblMode;
-            ui.lblPdu.innerText = t.lblPdu;
-            ui.lblHeader.innerText = t.lblHeader;
-            ui.lblFunction.innerText = t.lblFunction;
-            ui.lblDetails.innerText = t.lblDetails;
-            ui.lblExample.innerText = t.lblExample;
-            ui.lblStack.innerText = t.lblStack;
             
-            if(!autoplayTimer) ui.btnAuto.innerText = t.btnAuto;
-            else ui.btnAuto.innerText = t.btnStop;
+            const modeText = mode === 'encap' ? t.modeEncap : t.modeDecap;
+            if(ui.lblMode) ui.lblMode.innerText = t.lblMode;
+            if(ui.lblModeMobile) ui.lblModeMobile.innerText = modeText;
+            document.getElementById('mode-toggle').innerText = modeText;
+
+            document.getElementById('lbl-pdu').innerText = t.lblPdu;
+            document.getElementById('lbl-header').innerText = t.lblHeader;
+            document.getElementById('lbl-function').innerText = t.lblFunction;
+            
+            if(document.getElementById('lbl-details')) document.getElementById('lbl-details').innerText = t.lblDetails;
+            if(document.getElementById('lbl-example')) document.getElementById('lbl-example').innerText = t.lblExample;
+            if(document.getElementById('lbl-stack')) document.getElementById('lbl-stack').innerText = t.lblStack;
+            
+            const autoText = !autoplayTimer ? t.btnAuto : t.btnStop;
+            ui.btnAuto.innerText = autoText;
+            ui.mbAuto.innerText = autoText; // Update mobile auto button
             
             ui.btnExplode.innerText = isExploded ? t.btnExplodeOn : t.btnExplodeOff;
             ui.btnReset.innerText = t.btnReset;
             ui.btnDecap.innerText = t.btnDecapMode;
             
-            ui.modeLabel.innerText = mode === 'encap' ? t.modeEncap : t.modeDecap;
-
             document.getElementById('compare-title').innerText = t.compareTitle;
             document.getElementById('compare-role').innerText = t.compareRole;
             document.getElementById('compare-transport').innerText = t.compareTransport;
@@ -687,8 +686,11 @@
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
             
+            // Adjust camera based on screen size
+            const isMobile = window.innerWidth < 768;
+            const camZ = isMobile ? 14 : 10; // Move back on mobile
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.set(6, 5, 10);
+            camera.position.set(6, 5, camZ);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -745,18 +747,36 @@
             animate();
             
             window.addEventListener('resize', onResize);
-            bindUIEvents();
-        }
+            
+            // Event Listeners
+            // REMOVED non-existent mobile buttons listeners
+            document.getElementById('mb-compare').onclick = () => document.getElementById('compare-overlay').style.display = 'flex';
+            document.getElementById('mode-toggle').onclick = () => resetGame(mode === 'encap' ? 'decap' : 'encap');
+            
+            // Add click to mobile label to switch mode
+            const mobileModeLbl = document.getElementById('lbl-mode-mobile');
+            if(mobileModeLbl) {
+                mobileModeLbl.onclick = () => resetGame(mode === 'encap' ? 'decap' : 'encap');
+            }
+            
+            // Common Actions
+            const doNext = () => nextStep();
+            const doPrev = () => prevStep();
+            const doAuto = () => toggleAutoplay();
 
-        function bindUIEvents() {
-            if(ui.btnMain) ui.btnMain.onclick = nextStep;
+            if(ui.btnMain) ui.btnMain.onclick = doNext;
             if(ui.btnReset) ui.btnReset.onclick = () => resetGame(mode);
-            if(ui.modeLabel) ui.modeLabel.onclick = () => resetGame(mode === 'encap' ? 'decap' : 'encap');
             if(ui.btnDecap) ui.btnDecap.onclick = () => resetGame('decap');
 
-            document.getElementById('prev-step-btn').onclick = prevStep;
-            document.getElementById('next-step-btn').onclick = nextStep;
-            document.getElementById('autoplay-btn').onclick = toggleAutoplay;
+            // Bind both Desktop and Mobile buttons
+            ui.btnBack.onclick = doPrev;
+            ui.btnNext.onclick = doNext;
+            ui.btnAuto.onclick = doAuto;
+            
+            ui.mbPrev.onclick = doPrev;
+            ui.mbNext.onclick = doNext;
+            ui.mbAuto.onclick = doAuto;
+
             document.getElementById('speed-btn').onclick = toggleSpeed;
             document.getElementById('explode-btn').onclick = toggleExplode;
             
@@ -1009,7 +1029,7 @@
             ctx.fillText(text, 256, 256);
             
             ctx.font = 'bold 40px monospace';
-            ctx.fillText("PACKETLAB V1", 256, 140);
+            ctx.fillText("PACKETLAB V21", 256, 140);
             
             const date = new Date().toLocaleDateString();
             ctx.font = 'bold 30px monospace';
@@ -1066,7 +1086,12 @@
             stampMesh = null; 
 
             const t = translations[currentLang];
-            ui.modeLabel.innerText = mode === 'encap' ? t.modeEncap : t.modeDecap;
+            
+            const modeText = mode === 'encap' ? t.modeEncap : t.modeDecap;
+            if(ui.lblMode) ui.lblMode.innerText = t.lblMode;
+            if(ui.lblModeMobile) ui.lblModeMobile.innerText = modeText;
+            document.getElementById('mode-toggle').innerText = modeText;
+
             ui.msg.style.opacity = 0;
             ui.btnDecap.style.display = 'none';
             ui.btnReset.style.display = 'none';
@@ -1231,9 +1256,13 @@
                 autoplayTimer = null;
                 btn.innerText = t.btnAuto;
                 btn.classList.remove('border-green-500');
+                // Also update mobile button
+                ui.mbAuto.innerText = t.btnAuto;
             } else {
                 btn.innerText = t.btnStop;
                 btn.classList.add('border-green-500');
+                // Also update mobile button
+                ui.mbAuto.innerText = t.btnStop;
                 autoplayTimer = setInterval(() => {
                     if(!isAnimating) nextStep();
                 }, 2000 / speedMult);
@@ -1344,4 +1373,3 @@
   </script>
 </body>
 </html>
-
